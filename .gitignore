@@ -1,0 +1,12 @@
+/build/
+/evidence/
+/docs/
+/dist/
+.build/
+.DS_Store
+*.dmg
+*.zip
+*.pkg
+*.log
+.env
+.env.*
