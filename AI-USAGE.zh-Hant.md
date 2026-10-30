@@ -6,6 +6,8 @@
 
 你可以把下面這段貼給 AI，也能在填好安裝路徑後，加入該專案既有的 AI 工作指引。提供 GitHub 連結可以讓 AI 讀取說明，但不會自動替每一個 AI 完成設定。
 
+如果尚未安裝，可直接使用 [Claude Code 完整下載安裝 prompt](CLAUDE-CODE-INSTALL.zh-Hant.md)。
+
 ## 直接複製給 AI
 
 ```text

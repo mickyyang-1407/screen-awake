@@ -6,6 +6,8 @@ An AI assistant with permission to run local commands on your Mac can call Scree
 
 You can paste the following into a task, or add it to that project's existing AI instructions after replacing the app path. Linking this page helps an assistant read the instructions; it does not automatically configure every assistant.
 
+For a new installation, use the [complete Claude Code installation prompt (Traditional Chinese)](CLAUDE-CODE-INSTALL.zh-Hant.md).
+
 ## Copy this to your assistant
 
 ```text
