@@ -16,12 +16,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var guideWindow: NSWindow?
     private let guide = SetupGuideView()
     private let guideItem = NSMenuItem(title: "", action: #selector(showGuide), keyEquivalent: "?")
+    private let statusGuideItem = NSMenuItem(title: "", action: #selector(showGuide), keyEquivalent: "")
     private let helpMenuItem = NSMenuItem()
     private let menuState = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let menuToggle = NSMenuItem(title: "", action: #selector(toggleFromMenu), keyEquivalent: "")
     private let showItem = NSMenuItem(title: "", action: #selector(showWindow), keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "", action: #selector(quit), keyEquivalent: "q")
     private let appQuitItem = NSMenuItem(title: "", action: #selector(quit), keyEquivalent: "q")
+    private let controlsItem = NSMenuItem(title: "", action: #selector(showMenuBarControls), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         language = AppLanguage(rawValue: defaults.string(forKey: "appLanguage") ?? "system") ?? .system
@@ -84,14 +86,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showItem.title = text.showWindow
         quitItem.title = text.quit
         appQuitItem.title = text.quit
+        controlsItem.title = text.menuBarControls
         guideItem.title = text.guideButton
+        statusGuideItem.title = text.guideButton
         helpMenuItem.title = text.helpMenu
         guide.update(language: language)
         guideWindow?.title = text.guideButton
         let status = "\(text.productName): \(text.state(enabled))"
         statusItem.button?.toolTip = status
         statusItem.button?.setAccessibilityLabel(status)
-        statusItem.button?.image = NSImage(systemSymbolName: enabled ? "sun.max" : "display", accessibilityDescription: nil)
+        statusItem.button?.image = MenuBarIcon.image(enabled: enabled)
     }
 
     @objc private func toggleFromMenu() { setEnabled(assertionID == nil) }
@@ -100,6 +104,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func quit() { NSApp.terminate(nil) }
+    @objc private func showMenuBarControls() {
+        guard let button = statusItem.button, let menu = statusItem.menu else { return }
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: 0), in: button)
+    }
     @objc private func showGuide() {
         if guideWindow == nil {
             let help = NSWindow(contentRect: NSRect(origin: .zero, size: SetupGuideView.panelSize),
@@ -119,6 +127,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
+        controlsItem.target = self
+        appMenu.addItem(controlsItem)
+        appMenu.addItem(.separator())
         appQuitItem.target = self
         appMenu.addItem(appQuitItem)
         appItem.submenu = appMenu
@@ -131,7 +142,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.helpMenu = helpMenu
         NSApp.mainMenu = mainMenu
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "display", accessibilityDescription: nil)
+        statusItem.autosaveName = "ScreenAwake.MenuBar"
+        statusItem.isVisible = true
+        statusItem.button?.setAccessibilityIdentifier("ScreenAwakeMenuBar")
         let menu = NSMenu()
         menu.addItem(menuState)
         menuToggle.target = self
@@ -139,6 +152,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         showItem.target = self
         menu.addItem(showItem)
+        statusGuideItem.target = self
+        menu.addItem(statusGuideItem)
         quitItem.target = self
         menu.addItem(quitItem)
         statusItem.menu = menu

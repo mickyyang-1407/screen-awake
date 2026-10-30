@@ -32,6 +32,7 @@ struct AppText {
     var openSettings: String { chinese ? "打開鎖定畫面設定" : "Open Lock Screen settings" }
     var done: String { chinese ? "完成" : "Done" }
     var helpMenu: String { chinese ? "輔助說明" : "Help" }
+    var menuBarControls: String { chinese ? "選單列控制項" : "Menu Bar Controls" }
     var guideIntro: String { chinese ? "常亮開關本身不需要這項設定。只有需要讓螢幕關閉後，仍能由腳本喚醒並繼續錄影時，才需要以下步驟。" : "The keep-awake switch works without this setup. Follow these steps only if a script needs to wake the display and resume recording after it turns off." }
     var guideSteps: [(String, String)] {
         if chinese { return [

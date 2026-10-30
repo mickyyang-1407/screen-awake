@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- A consistent monitor icon in the menu bar, with a sun inside when keep-awake is on.
+- Direct access to the setup guide from the menu bar, alongside the toggle and window controls.
+
 ## 1.2.0
 
 - Refined native light/dark interface and a menu bar icon that reflects the awake state.

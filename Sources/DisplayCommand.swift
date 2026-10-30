@@ -14,7 +14,7 @@ struct DisplayCommandRunner {
 }
 
 enum DisplayCommand {
-    static let version = "1.2.0"
+    static let version = "1.2.1"
     static let usage = "Usage: ScreenAwake wake | dim | status | --help | --version"
 
     static func run(arguments: [String], runner: DisplayCommandRunner = .live) -> Int32 {

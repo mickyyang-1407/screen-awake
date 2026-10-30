@@ -35,6 +35,8 @@ Download the DMG and drag **Screen Awake** into **Applications**, then open it. 
 
 **Keep display awake** keeps the display on while you're away from the keyboard when explicitly enabled. It starts **off on every launch**, even if an older version saved it as on. Turn the switch off to return to the system's idle display sleep settings.
 
+The **monitor icon** in the menu bar stays visible while the app runs. A sun inside the monitor means keep-awake is on. Click it to toggle keep-awake, reopen the window, open the setup guide or quit.
+
 Closing the window leaves the app running. Its menu bar icon or Dock icon reopens it; **⌘Q** quits and releases its keep-awake request. Your language choice is remembered; the keep-awake switch is not restored on launch.
 
 The **Setup guide** button explains the optional password setting and opens the relevant System Settings pane without changing it.
