@@ -25,10 +25,31 @@ struct AppText {
     var eyebrow: String { chinese ? "顯示器控制" : "Display control" }
     var switchTitle: String { chinese ? "保持螢幕開啟" : "Keep display awake" }
     var switchHelp: String { chinese ? "關閉後，螢幕可依系統的閒置設定關閉。" : "Turn off to let the display follow the system idle setting." }
+    var sessionNote: String { chinese ? "只在本次開啟期間生效" : "For this session only" }
+    var guideTitle: String { chinese ? "螢幕暗掉後，不必輸入密碼" : "Wake without a password" }
+    var guideSubtitle: String { chinese ? "錄影前的設定教學" : "A short setup guide for recording" }
+    var guideButton: String { chinese ? "設定教學" : "Setup guide" }
+    var openSettings: String { chinese ? "打開鎖定畫面設定" : "Open Lock Screen settings" }
+    var done: String { chinese ? "完成" : "Done" }
+    var helpMenu: String { chinese ? "輔助說明" : "Help" }
+    var guideIntro: String { chinese ? "常亮開關本身不需要這項設定。只有需要讓螢幕關閉後，仍能由腳本喚醒並繼續錄影時，才需要以下步驟。" : "The keep-awake switch works without this setup. Follow these steps only if a script needs to wake the display and resume recording after it turns off." }
+    var guideSteps: [(String, String)] {
+        if chinese { return [
+            ("如果選項是灰色，先處理 iPhone 鏡像輸出", "在 Mac 開啟「iPhone 鏡像輸出」。從上方選單選 iPhone 鏡像輸出 → 設定，將認證方式改為「每次都詢問」（Ask every time）。選項原本可修改，就跳到下一步。"),
+            ("將關閉螢幕後要求密碼，設為「永不」", "打開 系統設定 → 鎖定畫面。找到「螢幕保護程式開始或顯示器關閉後要求輸入密碼」（Require password after screen saver begins or display is turned off），選「永不」（Never）。若系統要求密碼或確認，請自行完成。"),
+            ("完成錄影後，可以改回「立即」", "這只調整螢幕關閉後的密碼要求，不會刪除帳號密碼。選 Never 期間，旁人也可能直接使用這台 Mac。完成後可回到同一選項，改回 Immediately。")
+        ] }
+        return [
+            ("If the option is greyed out, check iPhone Mirroring", "Open iPhone Mirroring on your Mac. Choose iPhone Mirroring → Settings from the menu bar and select Ask every time. If the password option is already editable, skip this step."),
+            ("Set the display-off password requirement to Never", "Open System Settings → Lock Screen. Find “Require password after screen saver begins or display is turned off” and choose Never. Complete any password or confirmation prompt yourself."),
+            ("Restore Immediately when recording is finished", "This changes the password requirement after display sleep; it does not remove your account password. While set to Never, others may be able to use this Mac. Return to the same option and choose Immediately when finished.")
+        ]
+    }
+    var guideFootnote: String { chinese ? "已鎖定的 Mac 仍需先自行解鎖。若選項仍是灰色，可能受裝置管理政策限制。" : "Unlock an already locked Mac yourself first. Device management policies may also prevent changing this setting." }
     var languageLabel: String { chinese ? "語言" : "Language" }
     var languageHelp: String { chinese ? "立即切換介面語言，不影響螢幕狀態。" : "Change the interface language without changing the display state." }
     var systemOption: String { chinese ? "跟隨系統" : "System" }
-    var footer: String { chinese ? "關閉視窗後仍會運作。按 ⌘Q 結束。\n手動睡眠與鎖定仍由系統控制。" : "Keeps running when the window closes. ⌘Q quits.\nManual sleep and lock remain under system control." }
+    var footer: String { chinese ? "關閉視窗後仍會運作 · ⌘Q 結束\n每次啟動預設關閉常亮。" : "Runs with the window closed · ⌘Q quits\nKeep-awake starts off on every launch." }
     var showWindow: String { chinese ? "顯示視窗" : "Show Window" }
     var quit: String { chinese ? "結束螢幕常亮" : "Quit Screen Awake" }
     func state(_ enabled: Bool) -> String {

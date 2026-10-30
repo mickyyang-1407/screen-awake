@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 import IOKit.pwr_mgt
 import os
 
@@ -12,6 +13,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private var statusItem: NSStatusItem!
     private let panel = AwakePanelView()
+    private var guideWindow: NSWindow?
+    private let guide = SetupGuideView()
+    private let guideItem = NSMenuItem(title: "", action: #selector(showGuide), keyEquivalent: "?")
+    private let helpMenuItem = NSMenuItem()
     private let menuState = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let menuToggle = NSMenuItem(title: "", action: #selector(toggleFromMenu), keyEquivalent: "")
     private let showItem = NSMenuItem(title: "", action: #selector(showWindow), keyEquivalent: "")
@@ -22,8 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         language = AppLanguage(rawValue: defaults.string(forKey: "appLanguage") ?? "system") ?? .system
         buildMenus()
         buildWindow()
-        let saved = defaults.object(forKey: "keepDisplayAwake") as? Bool ?? true
-        setEnabled(saved)
+        // Continuous display-awake is opt-in for each GUI launch, including upgrades.
+        setEnabled(false)
         showWindow()
     }
 
@@ -58,7 +63,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard result == kIOReturnSuccess else { reportFailure(enabling: false, code: result); return }
             assertionID = nil
         }
-        defaults.set(enabled, forKey: "keepDisplayAwake")
         powerError = nil
         updateUI()
     }
@@ -80,9 +84,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showItem.title = text.showWindow
         quitItem.title = text.quit
         appQuitItem.title = text.quit
+        guideItem.title = text.guideButton
+        helpMenuItem.title = text.helpMenu
+        guide.update(language: language)
+        guideWindow?.title = text.guideButton
         let status = "\(text.productName): \(text.state(enabled))"
         statusItem.button?.toolTip = status
         statusItem.button?.setAccessibilityLabel(status)
+        statusItem.button?.image = NSImage(systemSymbolName: enabled ? "sun.max" : "display", accessibilityDescription: nil)
     }
 
     @objc private func toggleFromMenu() { setEnabled(assertionID == nil) }
@@ -91,6 +100,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func quit() { NSApp.terminate(nil) }
+    @objc private func showGuide() {
+        if guideWindow == nil {
+            let help = NSWindow(contentRect: NSRect(origin: .zero, size: SetupGuideView.panelSize),
+                                styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            help.isReleasedWhenClosed = false
+            help.contentView = guide
+            help.center()
+            guideWindow = help
+            guide.onDone = { [weak self] in self?.guideWindow?.close() }
+        }
+        guideWindow?.title = AppText(language: language.resolved).guideButton
+        guideWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
 
     private func buildMenus() {
         let mainMenu = NSMenu()
@@ -100,6 +123,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(appQuitItem)
         appItem.submenu = appMenu
         mainMenu.addItem(appItem)
+        let helpMenu = NSMenu()
+        guideItem.target = self
+        helpMenu.addItem(guideItem)
+        helpMenuItem.submenu = helpMenu
+        mainMenu.addItem(helpMenuItem)
+        NSApp.helpMenu = helpMenu
         NSApp.mainMenu = mainMenu
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "display", accessibilityDescription: nil)
@@ -123,6 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView = panel
         window.initialFirstResponder = panel.awakeSwitch
         panel.onToggle = { [weak self] enabled in self?.setEnabled(enabled) }
+        panel.onGuide = { [weak self] in self?.showGuide() }
         panel.onLanguageChange = { [weak self] language in
             guard let self else { return }
             self.language = language
@@ -135,6 +165,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct ScreenAwake {
     @MainActor static func main() {
+        let arguments = Array(CommandLine.arguments.dropFirst())
+        if !arguments.isEmpty {
+            exit(DisplayCommand.run(arguments: arguments))
+        }
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate

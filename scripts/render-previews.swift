@@ -9,6 +9,18 @@ struct RenderPreviews {
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         var report: [String] = []
         var failureCount = 0
+        func capture(_ view: NSView, appearance: NSAppearance?, name: String) throws {
+            let window = NSWindow(contentRect: NSRect(origin: .zero, size: view.frame.size),
+                                  styleMask: .borderless, backing: .buffered, defer: false)
+            window.contentView = view
+            window.appearance = appearance
+            view.layoutSubtreeIfNeeded()
+            view.displayIfNeeded()
+            guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { fatalError("No bitmap") }
+            view.cacheDisplay(in: view.bounds, to: bitmap)
+            guard let png = bitmap.representation(using: .png, properties: [:]) else { fatalError("No PNG") }
+            try png.write(to: output.appendingPathComponent("\(name).png"))
+        }
         for language in [AppLanguage.english, .traditionalChinese] {
             for (theme, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
                 let cases: [(name: String, enabled: Bool, error: PowerError?)] = [
@@ -21,25 +33,20 @@ struct RenderPreviews {
                     let panel = AwakePanelView()
                     panel.appearance = NSAppearance(named: appearance)
                     panel.update(enabled: preview.enabled, language: language, error: preview.error)
-                    let window = NSWindow(contentRect: NSRect(origin: .zero, size: AwakePanelView.panelSize),
-                                          styleMask: .borderless, backing: .buffered, defer: false)
-                    window.contentView = panel
-                    window.appearance = panel.appearance
-                    panel.layoutSubtreeIfNeeded()
-                    panel.displayIfNeeded()
                     let name = "\(language.rawValue)-\(theme)-\(preview.name)"
                     let failures = panel.measuredLayoutFailures()
                     failureCount += failures.count
                     report.append("\(name): \(failures.isEmpty ? "PASS — no measured clipping" : failures.joined(separator: "; "))")
-                    guard let bitmap = panel.bitmapImageRepForCachingDisplay(in: panel.bounds) else {
-                        fatalError("Unable to allocate preview bitmap")
-                    }
-                    panel.cacheDisplay(in: panel.bounds, to: bitmap)
-                    guard let png = bitmap.representation(using: .png, properties: [:]) else {
-                        fatalError("Unable to encode preview")
-                    }
-                    try png.write(to: output.appendingPathComponent("\(name).png"))
+                    try capture(panel, appearance: panel.appearance, name: name)
                 }
+                let guide = SetupGuideView()
+                guide.appearance = NSAppearance(named: appearance)
+                guide.update(language: language)
+                let failures = guide.measuredLayoutFailures()
+                failureCount += failures.count
+                let name = "\(language.rawValue)-\(theme)-guide"
+                report.append("\(name): \(failures.isEmpty ? "PASS — no measured clipping" : failures.joined(separator: "; "))")
+                try capture(guide, appearance: guide.appearance, name: name)
             }
         }
         let result = report.joined(separator: "\n") + "\nMeasured layout failures: \(failureCount)\n"

@@ -2,12 +2,14 @@ import AppKit
 
 @MainActor
 final class AwakePanelView: NSView {
-    static let panelSize = NSSize(width: 394, height: 354)
+    static let panelSize = NSSize(width: 420, height: 414)
     override var isFlipped: Bool { true }
-    let awakeSwitch = NSSwitch(frame: NSRect(x: 316, y: 190, width: 42, height: 28))
-    let languagePopup = NSPopUpButton(frame: NSRect(x: 211, y: 261, width: 161, height: 28), pullsDown: false)
+    let awakeSwitch = NSSwitch(frame: NSRect(x: 336, y: 211, width: 42, height: 28))
+    let languagePopup = NSPopUpButton(frame: NSRect(x: 244, y: 24, width: 154, height: 28), pullsDown: false)
+    let guideButton = NSButton(title: "", target: nil, action: nil)
     var onToggle: ((Bool) -> Void)?
     var onLanguageChange: ((AppLanguage) -> Void)?
+    var onGuide: (() -> Void)?
     private let product = NSTextField(labelWithString: "")
     private let eyebrow = NSTextField(labelWithString: "")
     private let state = NSTextField(labelWithString: "")
@@ -20,14 +22,14 @@ final class AwakePanelView: NSView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: NSRect(origin: frameRect.origin, size: Self.panelSize))
-        configure(product, rect: NSRect(x: 80, y: 23, width: 290, height: 22), size: 15, weight: .semibold)
-        configure(eyebrow, rect: NSRect(x: 80, y: 47, width: 290, height: 18), size: 12)
-        configure(state, rect: NSRect(x: 24, y: 86, width: 346, height: 34), size: 26, weight: .semibold)
-        configure(detail, rect: NSRect(x: 24, y: 128, width: 346, height: 22), size: 13)
-        configure(errorLabel, rect: NSRect(x: 24, y: 151, width: 346, height: 27), size: 11)
-        configure(switchLabel, rect: NSRect(x: 36, y: 195, width: 268, height: 24), size: 14, weight: .medium)
-        configure(languageLabel, rect: NSRect(x: 24, y: 267, width: 170, height: 20), size: 12)
-        configure(footer, rect: NSRect(x: 24, y: 307, width: 346, height: 34), size: 11)
+        configure(product, rect: NSRect(x: 24, y: 24, width: 210, height: 22), size: 15, weight: .semibold)
+        configure(eyebrow, rect: NSRect(x: 24, y: 49, width: 210, height: 18), size: 11)
+        configure(state, rect: NSRect(x: 94, y: 97, width: 302, height: 34), size: 25, weight: .semibold)
+        configure(detail, rect: NSRect(x: 24, y: 156, width: 372, height: 21), size: 13)
+        configure(errorLabel, rect: NSRect(x: 24, y: 270, width: 372, height: 35), size: 11)
+        configure(switchLabel, rect: NSRect(x: 40, y: 206, width: 282, height: 22), size: 14, weight: .medium)
+        configure(languageLabel, rect: NSRect(x: 40, y: 231, width: 282, height: 18), size: 11)
+        configure(footer, rect: NSRect(x: 24, y: 360, width: 372, height: 36), size: 11)
         awakeSwitch.target = self
         awakeSwitch.action = #selector(toggle)
         addSubview(awakeSwitch)
@@ -36,8 +38,15 @@ final class AwakePanelView: NSView {
         languagePopup.target = self
         languagePopup.action = #selector(changeLanguage)
         addSubview(languagePopup)
+        guideButton.frame = NSRect(x: 24, y: 311, width: 372, height: 30)
+        guideButton.bezelStyle = .rounded
+        guideButton.font = .systemFont(ofSize: 12)
+        guideButton.target = self
+        guideButton.action = #selector(showGuide)
+        addSubview(guideButton)
         awakeSwitch.nextKeyView = languagePopup
-        languagePopup.nextKeyView = awakeSwitch
+        languagePopup.nextKeyView = guideButton
+        guideButton.nextKeyView = awakeSwitch
         update(enabled: false, language: .english, error: nil)
     }
 
@@ -48,6 +57,7 @@ final class AwakePanelView: NSView {
         field.frame = rect
         field.font = .systemFont(ofSize: size, weight: weight)
         field.lineBreakMode = field === footer || field === errorLabel ? .byWordWrapping : .byClipping
+        field.maximumNumberOfLines = field === footer || field === errorLabel ? 0 : 1
         addSubview(field)
     }
 
@@ -59,7 +69,9 @@ final class AwakePanelView: NSView {
         state.stringValue = text.state(enabled)
         detail.stringValue = text.detail(enabled)
         switchLabel.stringValue = text.switchTitle
-        languageLabel.stringValue = text.languageLabel
+        languageLabel.stringValue = text.sessionNote
+        guideButton.title = text.guideButton
+        guideButton.toolTip = text.guideTitle
         footer.stringValue = text.footer
         errorLabel.stringValue = error.map(text.error) ?? ""
         awakeSwitch.state = enabled ? .on : .off
@@ -74,6 +86,7 @@ final class AwakePanelView: NSView {
     }
 
     @objc private func toggle() { onToggle?(awakeSwitch.state == .on) }
+    @objc private func showGuide() { onGuide?() }
     @objc private func changeLanguage() {
         let index = languagePopup.indexOfSelectedItem
         guard AppLanguage.allCases.indices.contains(index) else { return }
@@ -87,22 +100,26 @@ final class AwakePanelView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-        let background = color(dark ? 0x252622 : 0xF8F7F3)
-        let foreground = color(dark ? 0xF2F1E9 : 0x272A23)
-        let secondary = color(dark ? 0xB9BBB0 : 0x65695F)
-        let amber = color(dark ? 0xE7B85A : 0x986212)
+        let background = color(dark ? 0x232521 : 0xF6F5F0)
+        let foreground = color(dark ? 0xF1F1E8 : 0x292D26)
+        let secondary = color(dark ? 0xB9BEB0 : 0x656B5E)
+        let amber = color(dark ? 0xE5BC6A : 0x8B5B16)
         background.setFill()
         dirtyRect.fill()
-        color(dark ? 0x32342D : 0xECEDE6).setFill()
-        NSBezierPath(roundedRect: NSRect(x: 20, y: 178, width: 354, height: 54), xRadius: 12, yRadius: 12).fill()
-        color(dark ? 0x43463C : 0xDCDDD4).setFill()
-        NSRect(x: 24, y: 250, width: 346, height: 1).fill()
+        color(dark ? 0x30352B : 0xE8EBDD).setFill()
+        NSBezierPath(roundedRect: NSRect(x: 24, y: 87, width: 56, height: 56), xRadius: 16, yRadius: 16).fill()
+        color(dark ? 0x30332B : 0xFFFFFF).setFill()
+        let control = NSBezierPath(roundedRect: NSRect(x: 24, y: 191, width: 372, height: 70), xRadius: 14, yRadius: 14)
+        control.fill()
+        color(dark ? 0x484D40 : 0xDFE2D6).setStroke()
+        control.lineWidth = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? 2 : 0.7
+        control.stroke()
         product.textColor = foreground
         state.textColor = enabled ? amber : foreground
         switchLabel.textColor = foreground
         for label in [eyebrow, detail, languageLabel, footer] { label.textColor = secondary }
         errorLabel.textColor = .systemRed
-        drawMonitor(in: NSRect(x: 24, y: 25, width: 40, height: 40), ink: foreground,
+        drawMonitor(in: NSRect(x: 32, y: 96, width: 40, height: 40), ink: foreground,
                     accent: enabled ? amber : secondary, active: enabled)
     }
 
