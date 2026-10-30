@@ -14,6 +14,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private var statusItem: NSStatusItem!
     private let panel = AwakePanelView()
+    private let schedules = ScheduleController()
+    private let scheduleView = ScheduleView()
+    private var scheduleWindow: NSWindow?
+    private let scheduleItem = NSMenuItem(title: "", action: #selector(showSchedule), keyEquivalent: "")
+    private let menuNextEvent = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private var guideWindow: NSWindow?
     private let guide = SetupGuideView()
     private let guideItem = NSMenuItem(title: "", action: #selector(showGuide), keyEquivalent: "?")
@@ -34,6 +39,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         buildWindow()
         // Continuous display-awake is opt-in for each GUI launch, including upgrades.
         setEnabled(false)
+        schedules.onChange = { [weak self] in self?.updateUI() }
+        schedules.onEvent = { [weak self] event in
+            guard let self, !self.actionState.isRunning else { return false }
+            if event.keepAwake { self.setEnabled(true) }
+            return self.performDisplayAction(event.action)
+        }
+        schedules.start()
         showWindow()
     }
 
@@ -45,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        schedules.stop()
         if let id = assertionID {
             let result = IOPMAssertionRelease(id)
             if result != kIOReturnSuccess { logger.error("Assertion release at quit failed: \(result)") }
@@ -81,7 +94,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateUI() {
         let enabled = assertionID != nil
         let text = AppText(language: language.resolved)
-        panel.update(enabled: enabled, language: language, error: powerError, actionState: actionState)
+        panel.update(enabled: enabled, language: language, error: powerError, actionState: actionState, nextEvent: schedules.nextEvent)
+        let scheduleText = ScheduleText(language: language)
+        scheduleItem.title = scheduleText.menuTitle
+        menuNextEvent.title = scheduleText.event(schedules.nextEvent)
+        scheduleView.update(language: language, settings: schedules.settings, next: schedules.nextEvent, missed: schedules.missedEvent)
+        scheduleWindow?.title = scheduleText.title
         window.title = text.productName
         menuState.title = text.currentState(enabled)
         menuToggle.title = text.switchTitle
@@ -110,11 +128,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func wakeDisplay() { performDisplayAction(.wake) }
     @objc private func dimDisplay() { performDisplayAction(.dim) }
 
-    private func performDisplayAction(_ action: DisplayAction) {
-        guard !actionState.isRunning else { return }
+    @discardableResult
+    private func performDisplayAction(_ action: DisplayAction) -> Bool {
+        guard !actionState.isRunning else { return false }
         if action == .dim {
             setEnabled(false)
-            guard assertionID == nil else { return }
+            guard assertionID == nil else { return true }
         }
         actionState = .running(action)
         updateUI()
@@ -127,6 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if code != 0 { self.logger.error("Display action failed, exit code: \(code)") }
             self.updateUI()
         }
+        return true
     }
     @objc private func showWindow() {
         window.makeKeyAndOrderFront(nil)
@@ -136,6 +156,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func showMenuBarControls() {
         guard let button = statusItem.button, let menu = statusItem.menu else { return }
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: 0), in: button)
+    }
+    @objc private func showSchedule() {
+        if scheduleWindow == nil {
+            let settings = NSWindow(contentRect: NSRect(origin: .zero, size: ScheduleView.panelSize),
+                                    styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            settings.isReleasedWhenClosed = false
+            settings.contentView = scheduleView
+            settings.center()
+            scheduleWindow = settings
+            scheduleView.onSaveDaily = { [weak self] daily in self?.schedules.saveDaily(daily) ?? false }
+            scheduleView.onStartCountdown = { [weak self] minutes, action in self?.schedules.startCountdown(minutes: minutes, action: action) ?? false }
+            scheduleView.onCancelCountdown = { [weak self] in self?.schedules.cancelCountdown() }
+            scheduleView.onDone = { [weak self] in self?.scheduleWindow?.close() }
+        }
+        updateUI()
+        scheduleWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
     @objc private func showGuide() {
         if guideWindow == nil {
@@ -187,6 +224,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(dimItem)
         menu.addItem(.separator())
         showItem.target = self
+        menuNextEvent.isEnabled = false
+        menu.addItem(menuNextEvent)
+        scheduleItem.target = self
+        menu.addItem(scheduleItem)
+        menu.addItem(.separator())
         menu.addItem(showItem)
         statusGuideItem.target = self
         menu.addItem(statusGuideItem)
@@ -203,6 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView = panel
         window.initialFirstResponder = panel.awakeSwitch
         panel.onToggle = { [weak self] enabled in self?.setEnabled(enabled) }
+        panel.onSchedule = { [weak self] in self?.showSchedule() }
         panel.onGuide = { [weak self] in self?.showGuide() }
         panel.onDisplayAction = { [weak self] action in self?.performDisplayAction(action) }
         panel.onLanguageChange = { [weak self] language in

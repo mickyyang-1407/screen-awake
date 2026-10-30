@@ -14,7 +14,7 @@ nonisolated struct DisplayCommandRunner {
 }
 
 nonisolated enum DisplayCommand {
-    static let version = "1.3.0"
+    static let version = "1.4.0"
     static let usage = "Usage: ScreenAwake wake | dim | status | --help | --version"
 
     @concurrent static func perform(command: String) async -> Int32 {

@@ -6,12 +6,14 @@ final class AwakePanelView: NSView {
     override var isFlipped: Bool { true }
     let awakeSwitch = NSSwitch(frame: NSRect(x: 336, y: 211, width: 42, height: 28))
     let languagePopup = NSPopUpButton(frame: NSRect(x: 244, y: 24, width: 154, height: 28), pullsDown: false)
+    let scheduleButton = NSButton(title: "", target: nil, action: nil)
     let guideButton = NSButton(title: "", target: nil, action: nil)
     let wakeButton = NSButton(title: "", target: nil, action: nil)
     let dimButton = NSButton(title: "", target: nil, action: nil)
     var onToggle: ((Bool) -> Void)?
     var onLanguageChange: ((AppLanguage) -> Void)?
     var onGuide: (() -> Void)?
+    var onSchedule: (() -> Void)?
     var onDisplayAction: ((DisplayAction) -> Void)?
     private let product = NSTextField(labelWithString: "")
     private let eyebrow = NSTextField(labelWithString: "")
@@ -52,16 +54,23 @@ final class AwakePanelView: NSView {
         }
         wakeButton.action = #selector(wake)
         dimButton.action = #selector(dim)
-        guideButton.frame = NSRect(x: 24, y: 355, width: 372, height: 30)
+        guideButton.frame = NSRect(x: 216, y: 355, width: 180, height: 30)
         guideButton.bezelStyle = .rounded
         guideButton.font = .systemFont(ofSize: 12)
         guideButton.target = self
         guideButton.action = #selector(showGuide)
         addSubview(guideButton)
+        scheduleButton.frame = NSRect(x: 24, y: 355, width: 180, height: 30)
+        scheduleButton.bezelStyle = .rounded
+        scheduleButton.font = .systemFont(ofSize: 12)
+        scheduleButton.target = self
+        scheduleButton.action = #selector(showSchedule)
+        addSubview(scheduleButton)
         awakeSwitch.nextKeyView = languagePopup
         languagePopup.nextKeyView = wakeButton
         wakeButton.nextKeyView = dimButton
-        dimButton.nextKeyView = guideButton
+        dimButton.nextKeyView = scheduleButton
+        scheduleButton.nextKeyView = guideButton
         guideButton.nextKeyView = awakeSwitch
         update(enabled: false, language: .english, error: nil)
     }
@@ -77,7 +86,7 @@ final class AwakePanelView: NSView {
         addSubview(field)
     }
 
-    func update(enabled: Bool, language: AppLanguage, error: PowerError?, actionState: DisplayActionState = .idle) {
+    func update(enabled: Bool, language: AppLanguage, error: PowerError?, actionState: DisplayActionState = .idle, nextEvent: ScheduledEvent? = nil) {
         self.enabled = enabled
         let text = AppText(language: language.resolved)
         product.stringValue = text.productName
@@ -86,6 +95,9 @@ final class AwakePanelView: NSView {
         detail.stringValue = text.detail(enabled)
         switchLabel.stringValue = text.switchTitle
         languageLabel.stringValue = text.sessionNote
+        let scheduleText = ScheduleText(language: language)
+        scheduleButton.title = nextEvent == nil ? scheduleText.title : scheduleText.activeButton
+        scheduleButton.toolTip = scheduleText.event(nextEvent)
         guideButton.title = text.guideButton
         guideButton.toolTip = text.guideTitle
         wakeButton.title = text.wakeTitle
@@ -112,6 +124,7 @@ final class AwakePanelView: NSView {
     }
 
     @objc private func toggle() { onToggle?(awakeSwitch.state == .on) }
+    @objc private func showSchedule() { onSchedule?() }
     @objc private func showGuide() { onGuide?() }
     @objc private func wake() { onDisplayAction?(.wake) }
     @objc private func dim() { onDisplayAction?(.dim) }

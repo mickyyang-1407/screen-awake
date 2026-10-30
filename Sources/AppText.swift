@@ -18,7 +18,7 @@ struct PowerError {
     let code: Int32
 }
 
-enum DisplayAction: String, Sendable {
+nonisolated enum DisplayAction: String, Sendable, Codable {
     case wake, dim
 }
 
@@ -75,11 +75,13 @@ struct AppText {
         if chinese { return [
             ("如果選項是灰色，先處理 iPhone 鏡像輸出", "在 Mac 開啟「iPhone 鏡像輸出」。從上方選單選 iPhone 鏡像輸出 → 設定，將認證方式改為「每次都詢問」（Ask every time）。選項原本可修改，就跳到下一步。"),
             ("將關閉螢幕後要求密碼，設為「永不」", "打開 系統設定 → 鎖定畫面。找到「螢幕保護程式開始或顯示器關閉後要求輸入密碼」（Require password after screen saver begins or display is turned off），選「永不」（Never）。若系統要求密碼或確認，請自行完成。"),
+            ("用滑鼠或空白鍵，確認能直接回桌面", "先自行解鎖回到桌面，開啟本 App 並按 Dim。只用滑鼠或空白鍵喚醒，確認不需要密碼或 Touch ID；若要繼續亮屏，再開啟常亮。"),
             ("完成錄影後，可以改回「立即」", "這只調整螢幕關閉後的密碼要求，不會刪除帳號密碼。選 Never 期間，旁人也可能直接使用這台 Mac。完成後可回到同一選項，改回 Immediately。")
         ] }
         return [
             ("If the option is greyed out, check iPhone Mirroring", "Open iPhone Mirroring on your Mac. Choose iPhone Mirroring → Settings from the menu bar and select Ask every time. If the password option is already editable, skip this step."),
             ("Set the display-off password requirement to Never", "Open System Settings → Lock Screen. Find “Require password after screen saver begins or display is turned off” and choose Never. Complete any password or confirmation prompt yourself."),
+            ("Check with the mouse or space bar", "Unlock your Mac yourself, open this app and click Dim. Wake with the mouse or space bar and confirm you return to the desktop without a password or Touch ID. Turn keep-awake back on if needed."),
             ("Restore Immediately when recording is finished", "This changes the password requirement after display sleep; it does not remove your account password. While set to Never, others may be able to use this Mac. Return to the same option and choose Immediately when finished.")
         ]
     }

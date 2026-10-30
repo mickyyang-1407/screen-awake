@@ -1,6 +1,6 @@
 # Screen Awake
 
-Keep your Mac’s display on with one switch. Includes a small command-line tool for recording scripts, and a built-in setup guide.
+Keep your Mac’s display on with one switch. Wake or turn off the display from a small native window or the menu bar, with daily schedules and countdowns.
 
 [Download for macOS](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.dmg) · [ZIP](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.zip) · [繁體中文](README.zh-Hant.md)
 
@@ -8,54 +8,74 @@ macOS 14 or later · Apple silicon and Intel · English and 繁體中文 · MIT
 
 ![Screen Awake in English](assets/screenshots/en-light-on.png)
 
-## Use it
+## Start here
 
-### CLI: wake → record → dim
+1. Download the DMG and drag **Screen Awake** into **Applications**. Alternatively, unzip the ZIP.
+2. Open **Screen Awake**. Release downloads are Developer ID signed and notarized.
+3. Use the switch or the **Wake** and **Dim** buttons. The language menu switches between English and Traditional Chinese.
 
-Build the current source with `zsh scripts/build.sh --cli-only`, then call the executable directly from your agent's shell (no GUI opens). This uses the same Swift sources and skips GUI icon/bundle packaging:
+| Control | What it does |
+| --- | --- |
+| Keep display awake — ON | Keeps the display on while the app runs. |
+| Keep display awake — OFF | Returns to the existing system idle timeout. |
+| Wake | Wakes the display once; it does not enable continuous keep-awake. |
+| Dim | Releases this app’s keep-awake request, then asks macOS to turn off the display. |
+
+**Keep-awake starts off on every launch.** Your language choice is remembered. While an action runs, display controls are disabled briefly; progress and errors appear in the main window.
+
+## Use it from the menu bar
+
+Look for the **monitor icon**. A sun inside the monitor means keep-awake is on. Click it for the switch, Wake, Dim, the main window, Schedule, Setup guide or Quit.
+
+Closing the window leaves the app running. The menu bar or Dock icon reopens it; **⌘Q** quits and releases this app’s keep-awake request. Other apps may have their own requests.
+
+## Schedule your display
+
+Open **Schedule** in the main window or menu bar.
+
+- **Daily:** choose Early (08:00–17:00), Day (09:00–18:00), Night (20:00–08:00), or set your own times. Check **Enable daily schedule**, choose Wake and/or Dim, then click **Save daily schedule**. Presets fill the fields; they do not activate anything until saved.
+- **Keep awake after Wake** holds the display on until a Dim action or you turn keep-awake off. Uncheck it for a one-time wake.
+- **Countdown:** choose 15, 30, 60 or 120 minutes, or type a whole number from 1 to 1440. Choose Wake or Dim and click **Start countdown**. Restart replaces the existing countdown; Cancel removes it.
+
+Daily and countdown schedules can run together. The panel and menu bar show the next action. Dim wins if two actions have the exact same time. A countdown Wake is a one-time wake.
+
+**Keep the app running.** Closing a window is fine; quitting stops execution. Saved daily schedules and future countdowns resume when you reopen the app. A new installation has no enabled schedules, and saving one does not immediately change your display.
+
+Times follow the current Mac time zone. The app does not wake a sleeping or powered-off Mac. On launch, system wake or clock changes it recalculates future events and skips expired actions. A running timer allows up to 30 seconds for ordinary delivery delays or a busy display control, then skips the action. Daily actions run at most once per local calendar day. For daylight saving changes, a missing time moves to the next valid time and a repeated hour runs once.
+
+![Daily schedule](assets/screenshots/en-schedule-daily.png)
+
+## Optional: wake without a password
+
+The keep-awake switch works with your current password settings. If you want to turn off the display and return without authentication, follow the [setup guide](SETUP.md). It covers the Lock Screen setting, the greyed-out option caused by iPhone Mirroring, a manual check, and restoring protection afterwards.
+
+The app’s **Setup guide** button also explains the settings and opens the relevant System Settings pane. Security settings are changed by you. Wake cannot unlock an already locked Mac; an explicit lock by you or another app still requires unlocking.
+
+## For recording scripts
+
+The downloaded app already includes a CLI. With the app in Applications:
 
 ```sh
-./build/ScreenAwake status
-./build/ScreenAwake wake
-# Run your screen-recording command here and wait for it to finish.
-./build/ScreenAwake dim
+AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
+"$AWAKE" status
+"$AWAKE" wake
+# Run your recording command here and wait for completion.
+"$AWAKE" dim
 ```
 
-`wake` checks `/usr/sbin/sysadminctl -screenLock status` on every call, reports the result, then runs `/usr/bin/caffeinate -u -t 2` and waits for its two-second assertion to end. A successful wake exits 0. `dim` requests display sleep with `pmset displaysleepnow`. If macOS rejects it with error 1004, it tries the display-idle compatibility request (`IORequestIdle`). A successful request exits 0; this confirms acceptance, not that the physical display stayed asleep. Command failures exit nonzero, including when `pmset` reports a display-sleep failure but returns 0 itself; `--help` shows usage. Use a shell `trap` to call `dim` on exit if your recording script may fail.
+`wake` checks the display-off password requirement and waits for its two-second user-activity assertion to end. It leaves no continuous keep-awake process. The normal display timeout still applies during recording; for a longer recording, explicitly enable the GUI switch and turn it off before calling CLI `dim`.
 
-[Read the setup guide](SETUP.md), including what to do when the password option is greyed out by iPhone Mirroring. You can also open it inside the app.
-
-**Prerequisite:** Start with an unlocked session. In **System Settings > Lock Screen > "Require password after screen saver begins or display is turned off"**, select **Never** if the session must remain unlocked through display sleep. If this is not confirmed as Never (including a failed status check), `wake` prints a warning and continues. It cannot unlock an already locked session and never changes this setting itself.
-
-The CLI neither reads nor modifies the `pmset displaysleep` timeout or any other system setting, requires no `sudo`, and leaves no continuous keep-awake assertion. The normal display timeout still applies during recording; keep each recording within that existing timeout. The app download includes the same CLI at `Screen Awake.app/Contents/MacOS/ScreenAwake`.
-
-### GUI
-
-Download the DMG and drag **Screen Awake** into **Applications**, then open it. You can also unzip the ZIP and open the app directly.
-
-**Keep display awake** keeps the display on while you're away from the keyboard when explicitly enabled. It starts **off on every launch**, even if an older version saved it as on. Turn the switch off to return to the system's idle display sleep settings.
-
-The **monitor icon** in the menu bar stays visible while the app runs. A sun inside the monitor means keep-awake is on. Click it to toggle keep-awake, reopen the window, open the setup guide or quit.
-
-Closing the window leaves the app running. Its menu bar icon or Dock icon reopens it; **⌘Q** quits and releases its keep-awake request. Your language choice is remembered; the keep-awake switch is not restored on launch.
-
-**Wake** wakes the display once, without turning on continuous keep-awake. **Dim** releases this app’s keep-awake request, then asks macOS to turn off the display. Both buttons are available in the main window and menu bar. While an action runs, display controls are disabled briefly; progress and errors appear in the main window.
-
-The **Setup guide** button explains the optional password setting and opens the relevant System Settings pane without changing it.
-
-The language menu lets you choose English or Traditional Chinese instantly. The initial choice follows your system language.
-
-Other apps may also keep the display awake. Screen Awake releases only its own request. Manual sleep, screen locking, lid close and macOS power safeguards remain under system control.
+`dim` requests display sleep. Exit 0 means the request was accepted; input or another app may wake the display again. Failures return nonzero, including when macOS prints a rejection but returns 0 itself. `--help` lists the commands; `--version` prints the version. These commands do not change system timeouts or security settings and require no sudo.
 
 ## A small native app
 
 - Swift and AppKit, with no third-party runtime or dependencies.
 - macOS power management API, with no simulated mouse movement or repeated disk scanning.
-- No accounts, analytics or network requests. It does not read your documents or media; preferences stay on your Mac.
+- No accounts, analytics or app-originated network requests. Documents and media are not scanned; preferences stay on your Mac.
 
 ## Build from source
 
-Use Xcode with Swift 6.2 or later:
+For development, use Xcode with Swift 6.2 or later:
 
 ```sh
 git clone https://github.com/mickyyang-1407/screen-awake.git
@@ -64,9 +84,9 @@ zsh scripts/build.sh
 open "build/Screen Awake.app"
 ```
 
-The native SDK build produces a universal app with a local ad-hoc signature. No signing certificate is needed and no dependencies are downloaded.
+The native SDK build produces a universal app with a local ad-hoc signature. No signing certificate is needed and no dependencies are downloaded. `zsh scripts/build.sh --cli-only` produces `build/ScreenAwake` without packaging the GUI bundle.
 
-Run `zsh scripts/check.sh` for isolated CLI checks (no live display or settings changes), and `zsh scripts/render-previews.sh` for bilingual light/dark/error/guide previews.
+Run `zsh scripts/check.sh` for isolated CLI and schedule checks (private preferences, local timer callbacks, no live display or settings changes), and `zsh scripts/render-previews.sh` for bilingual state, schedule and guide previews.
 
 Bug reports and focused improvements are welcome. Please include your macOS version, chosen language and expected behavior when opening an issue.
 

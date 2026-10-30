@@ -22,6 +22,15 @@ This makes iPhone Mirroring ask you to authenticate before mirroring. Skip this 
 
 While set to Never, others may be able to use this Mac. Leave your account password, FileVault and automatic login unchanged. Device management policies may also prevent changing the option.
 
+## Check the return to the desktop yourself
+
+1. Unlock your Mac and return to the normal desktop, then open Screen Awake.
+2. Click **Dim**.
+3. Wake with Space or the mouse and confirm that you return directly without Touch ID or a password.
+4. Turn **Keep display awake** back on if you want the display to stay on afterwards.
+
+Check this yourself. A successful command or a visible display wake alone does not prove that authentication was unnecessary. If authentication is still required, check whether you or another app issued a separate explicit lock; Never does not cancel such a lock.
+
 ## Use the app
 
 - **Keep display awake ON** prevents idle display sleep while the app runs, including with the window closed.

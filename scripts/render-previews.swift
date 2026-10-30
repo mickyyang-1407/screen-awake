@@ -45,6 +45,20 @@ struct RenderPreviews {
                     report.append("\(name): \(failures.isEmpty ? "PASS — no measured clipping" : failures.joined(separator: "; "))")
                     try capture(panel, appearance: panel.appearance, name: name)
                 }
+                for mode in ["daily", "countdown"] {
+                    var settings = ScheduleSettings()
+                    settings.daily.enabled = true
+                    settings.countdown = CountdownSchedule(deadline: Date().addingTimeInterval(1800), action: .dim)
+                    let schedule = ScheduleView()
+                    schedule.appearance = NSAppearance(named: appearance)
+                    schedule.update(language: language, settings: settings, next: SchedulePlanner.next(in: settings, after: Date()), missed: false)
+                    if mode == "countdown" { schedule.previewCountdownMode() }
+                    let failures = schedule.measuredLayoutFailures()
+                    failureCount += failures.count
+                    let name = "\(language.rawValue)-\(theme)-schedule-\(mode)"
+                    report.append("\(name): \(failures.isEmpty ? "PASS — no measured clipping" : failures.joined(separator: "; "))")
+                    try capture(schedule, appearance: schedule.appearance, name: name)
+                }
                 let guide = SetupGuideView()
                 guide.appearance = NSAppearance(named: appearance)
                 guide.update(language: language)
