@@ -23,16 +23,22 @@ struct RenderPreviews {
         }
         for language in [AppLanguage.english, .traditionalChinese] {
             for (theme, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
-                let cases: [(name: String, enabled: Bool, error: PowerError?)] = [
-                    ("on", true, nil),
-                    ("off", false, nil),
-                    ("error-enabling", false, PowerError(enabling: true, code: Int32.min)),
-                    ("error-disabling", true, PowerError(enabling: false, code: Int32.min))
+                let cases: [(name: String, enabled: Bool, error: PowerError?, action: DisplayActionState)] = [
+                    ("on", true, nil, .idle),
+                    ("off", false, nil, .idle),
+                    ("error-enabling", false, PowerError(enabling: true, code: Int32.min), .idle),
+                    ("error-disabling", true, PowerError(enabling: false, code: Int32.min), .idle),
+                    ("waking", true, nil, .running(.wake)),
+                    ("dimming", false, nil, .running(.dim)),
+                    ("wake-failed", true, nil, .finished(.wake, Int32.min)),
+                    ("dim-failed", false, nil, .finished(.dim, Int32.min)),
+                    ("wake-done", true, nil, .finished(.wake, 0)),
+                    ("dim-done", false, nil, .finished(.dim, 0))
                 ]
                 for preview in cases {
                     let panel = AwakePanelView()
                     panel.appearance = NSAppearance(named: appearance)
-                    panel.update(enabled: preview.enabled, language: language, error: preview.error)
+                    panel.update(enabled: preview.enabled, language: language, error: preview.error, actionState: preview.action)
                     let name = "\(language.rawValue)-\(theme)-\(preview.name)"
                     let failures = panel.measuredLayoutFailures()
                     failureCount += failures.count

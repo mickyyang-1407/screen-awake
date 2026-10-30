@@ -2,14 +2,17 @@ import AppKit
 
 @MainActor
 final class AwakePanelView: NSView {
-    static let panelSize = NSSize(width: 420, height: 414)
+    static let panelSize = NSSize(width: 420, height: 458)
     override var isFlipped: Bool { true }
     let awakeSwitch = NSSwitch(frame: NSRect(x: 336, y: 211, width: 42, height: 28))
     let languagePopup = NSPopUpButton(frame: NSRect(x: 244, y: 24, width: 154, height: 28), pullsDown: false)
     let guideButton = NSButton(title: "", target: nil, action: nil)
+    let wakeButton = NSButton(title: "", target: nil, action: nil)
+    let dimButton = NSButton(title: "", target: nil, action: nil)
     var onToggle: ((Bool) -> Void)?
     var onLanguageChange: ((AppLanguage) -> Void)?
     var onGuide: (() -> Void)?
+    var onDisplayAction: ((DisplayAction) -> Void)?
     private let product = NSTextField(labelWithString: "")
     private let eyebrow = NSTextField(labelWithString: "")
     private let state = NSTextField(labelWithString: "")
@@ -19,6 +22,7 @@ final class AwakePanelView: NSView {
     private let footer = NSTextField(wrappingLabelWithString: "")
     private let errorLabel = NSTextField(wrappingLabelWithString: "")
     private var enabled = false
+    private var messageIsFailure = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: NSRect(origin: frameRect.origin, size: Self.panelSize))
@@ -29,7 +33,7 @@ final class AwakePanelView: NSView {
         configure(errorLabel, rect: NSRect(x: 24, y: 270, width: 372, height: 35), size: 11)
         configure(switchLabel, rect: NSRect(x: 40, y: 206, width: 282, height: 22), size: 14, weight: .medium)
         configure(languageLabel, rect: NSRect(x: 40, y: 231, width: 282, height: 18), size: 11)
-        configure(footer, rect: NSRect(x: 24, y: 360, width: 372, height: 36), size: 11)
+        configure(footer, rect: NSRect(x: 24, y: 404, width: 372, height: 36), size: 11)
         awakeSwitch.target = self
         awakeSwitch.action = #selector(toggle)
         addSubview(awakeSwitch)
@@ -38,14 +42,26 @@ final class AwakePanelView: NSView {
         languagePopup.target = self
         languagePopup.action = #selector(changeLanguage)
         addSubview(languagePopup)
-        guideButton.frame = NSRect(x: 24, y: 311, width: 372, height: 30)
+        wakeButton.frame = NSRect(x: 24, y: 311, width: 180, height: 32)
+        dimButton.frame = NSRect(x: 216, y: 311, width: 180, height: 32)
+        for button in [wakeButton, dimButton] {
+            button.bezelStyle = .rounded
+            button.font = .systemFont(ofSize: 12, weight: .medium)
+            button.target = self
+            addSubview(button)
+        }
+        wakeButton.action = #selector(wake)
+        dimButton.action = #selector(dim)
+        guideButton.frame = NSRect(x: 24, y: 355, width: 372, height: 30)
         guideButton.bezelStyle = .rounded
         guideButton.font = .systemFont(ofSize: 12)
         guideButton.target = self
         guideButton.action = #selector(showGuide)
         addSubview(guideButton)
         awakeSwitch.nextKeyView = languagePopup
-        languagePopup.nextKeyView = guideButton
+        languagePopup.nextKeyView = wakeButton
+        wakeButton.nextKeyView = dimButton
+        dimButton.nextKeyView = guideButton
         guideButton.nextKeyView = awakeSwitch
         update(enabled: false, language: .english, error: nil)
     }
@@ -61,7 +77,7 @@ final class AwakePanelView: NSView {
         addSubview(field)
     }
 
-    func update(enabled: Bool, language: AppLanguage, error: PowerError?) {
+    func update(enabled: Bool, language: AppLanguage, error: PowerError?, actionState: DisplayActionState = .idle) {
         self.enabled = enabled
         let text = AppText(language: language.resolved)
         product.stringValue = text.productName
@@ -72,8 +88,18 @@ final class AwakePanelView: NSView {
         languageLabel.stringValue = text.sessionNote
         guideButton.title = text.guideButton
         guideButton.toolTip = text.guideTitle
+        wakeButton.title = text.wakeTitle
+        wakeButton.toolTip = text.wakeHelp
+        wakeButton.setAccessibilityHelp(text.wakeHelp)
+        dimButton.title = text.dimTitle
+        dimButton.toolTip = text.dimHelp
+        dimButton.setAccessibilityHelp(text.dimHelp)
+        wakeButton.isEnabled = !actionState.isRunning
+        dimButton.isEnabled = !actionState.isRunning
+        awakeSwitch.isEnabled = !actionState.isRunning
         footer.stringValue = text.footer
-        errorLabel.stringValue = error.map(text.error) ?? ""
+        errorLabel.stringValue = error.map(text.error) ?? text.actionMessage(actionState)
+        messageIsFailure = error != nil || actionState.isFailure
         awakeSwitch.state = enabled ? .on : .off
         awakeSwitch.setAccessibilityLabel(text.switchTitle)
         awakeSwitch.setAccessibilityHelp(text.switchHelp)
@@ -87,6 +113,8 @@ final class AwakePanelView: NSView {
 
     @objc private func toggle() { onToggle?(awakeSwitch.state == .on) }
     @objc private func showGuide() { onGuide?() }
+    @objc private func wake() { onDisplayAction?(.wake) }
+    @objc private func dim() { onDisplayAction?(.dim) }
     @objc private func changeLanguage() {
         let index = languagePopup.indexOfSelectedItem
         guard AppLanguage.allCases.indices.contains(index) else { return }
@@ -118,7 +146,7 @@ final class AwakePanelView: NSView {
         state.textColor = enabled ? amber : foreground
         switchLabel.textColor = foreground
         for label in [eyebrow, detail, languageLabel, footer] { label.textColor = secondary }
-        errorLabel.textColor = .systemRed
+        errorLabel.textColor = messageIsFailure ? .systemRed : secondary
         drawMonitor(in: NSRect(x: 32, y: 96, width: 40, height: 40), ink: foreground,
                     accent: enabled ? amber : secondary, active: enabled)
     }

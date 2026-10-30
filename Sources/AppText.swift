@@ -18,6 +18,25 @@ struct PowerError {
     let code: Int32
 }
 
+enum DisplayAction: String, Sendable {
+    case wake, dim
+}
+
+enum DisplayActionState {
+    case idle
+    case running(DisplayAction)
+    case finished(DisplayAction, Int32)
+
+    var isRunning: Bool {
+        if case .running = self { return true }
+        return false
+    }
+    var isFailure: Bool {
+        if case .finished(_, let code) = self { return code != 0 }
+        return false
+    }
+}
+
 struct AppText {
     let language: AppLanguage
     private var chinese: Bool { language == .traditionalChinese }
@@ -33,6 +52,24 @@ struct AppText {
     var done: String { chinese ? "完成" : "Done" }
     var helpMenu: String { chinese ? "輔助說明" : "Help" }
     var menuBarControls: String { chinese ? "選單列控制項" : "Menu Bar Controls" }
+    var wakeTitle: String { chinese ? "Wake 喚醒螢幕" : "Wake" }
+    var dimTitle: String { chinese ? "Dim 關閉螢幕" : "Dim" }
+    var wakeHelp: String { chinese ? "送出一次喚醒要求，不會開啟持續常亮，也無法解鎖已鎖定的 Mac。" : "Wake the display once. Does not enable keep-awake or unlock a locked Mac." }
+    var dimHelp: String { chinese ? "先關閉本 App 的常亮，再送出關閉螢幕要求。密碼要求仍依系統設定。" : "Turn off this app’s keep-awake request, then sleep the display. The system password setting still applies." }
+    func actionMessage(_ state: DisplayActionState) -> String {
+        switch state {
+        case .idle: return ""
+        case .running(let action):
+            if chinese { return action == .wake ? "正在喚醒螢幕…" : "正在關閉螢幕…" }
+            return action == .wake ? "Waking the display…" : "Turning the display off…"
+        case .finished(let action, let code):
+            if code != 0 {
+                return chinese ? "\(action.rawValue.capitalized) 無法完成（\(code)）。請查看設定教學。" : "\(action.rawValue.capitalized) failed (\(code)). See Setup guide."
+            }
+            if chinese { return action == .wake ? "已送出喚醒要求。" : "已送出關屏要求。移動滑鼠可喚醒。" }
+            return action == .wake ? "Display wake requested." : "Display sleep requested. Move the mouse to wake it."
+        }
+    }
     var guideIntro: String { chinese ? "常亮開關本身不需要這項設定。只有需要讓螢幕關閉後，仍能由腳本喚醒並繼續錄影時，才需要以下步驟。" : "The keep-awake switch works without this setup. Follow these steps only if a script needs to wake the display and resume recording after it turns off." }
     var guideSteps: [(String, String)] {
         if chinese { return [
@@ -46,7 +83,7 @@ struct AppText {
             ("Restore Immediately when recording is finished", "This changes the password requirement after display sleep; it does not remove your account password. While set to Never, others may be able to use this Mac. Return to the same option and choose Immediately when finished.")
         ]
     }
-    var guideFootnote: String { chinese ? "已鎖定的 Mac 仍需先自行解鎖。若選項仍是灰色，可能受裝置管理政策限制。" : "Unlock an already locked Mac yourself first. Device management policies may also prevent changing this setting." }
+    var guideFootnote: String { chinese ? "Never 不會取消手動或其他程式送出的「立即鎖定」；這些情況仍需自行解鎖。若選項是灰色，可能受裝置管理政策限制。" : "Never does not cancel an explicit lock by you or another app; unlock those sessions yourself. Device management policies may also prevent changing this setting." }
     var languageLabel: String { chinese ? "語言" : "Language" }
     var languageHelp: String { chinese ? "立即切換介面語言，不影響螢幕狀態。" : "Change the interface language without changing the display state." }
     var systemOption: String { chinese ? "跟隨系統" : "System" }

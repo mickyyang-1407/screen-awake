@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var assertionID: IOPMAssertionID?
     private var language = AppLanguage.system
     private var powerError: PowerError?
+    private var actionState = DisplayActionState.idle
     private var window: NSWindow!
     private var statusItem: NSStatusItem!
     private let panel = AwakePanelView()
@@ -24,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let quitItem = NSMenuItem(title: "", action: #selector(quit), keyEquivalent: "q")
     private let appQuitItem = NSMenuItem(title: "", action: #selector(quit), keyEquivalent: "q")
     private let controlsItem = NSMenuItem(title: "", action: #selector(showMenuBarControls), keyEquivalent: "")
+    private let wakeItem = NSMenuItem(title: "", action: #selector(wakeDisplay), keyEquivalent: "")
+    private let dimItem = NSMenuItem(title: "", action: #selector(dimDisplay), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         language = AppLanguage(rawValue: defaults.string(forKey: "appLanguage") ?? "system") ?? .system
@@ -78,11 +81,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateUI() {
         let enabled = assertionID != nil
         let text = AppText(language: language.resolved)
-        panel.update(enabled: enabled, language: language, error: powerError)
+        panel.update(enabled: enabled, language: language, error: powerError, actionState: actionState)
         window.title = text.productName
         menuState.title = text.currentState(enabled)
         menuToggle.title = text.switchTitle
         menuToggle.state = enabled ? .on : .off
+        menuToggle.isEnabled = !actionState.isRunning
+        wakeItem.title = text.wakeTitle
+        dimItem.title = text.dimTitle
+        wakeItem.isEnabled = !actionState.isRunning
+        dimItem.isEnabled = !actionState.isRunning
         showItem.title = text.showWindow
         quitItem.title = text.quit
         appQuitItem.title = text.quit
@@ -99,6 +107,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleFromMenu() { setEnabled(assertionID == nil) }
+    @objc private func wakeDisplay() { performDisplayAction(.wake) }
+    @objc private func dimDisplay() { performDisplayAction(.dim) }
+
+    private func performDisplayAction(_ action: DisplayAction) {
+        guard !actionState.isRunning else { return }
+        if action == .dim {
+            setEnabled(false)
+            guard assertionID == nil else { return }
+        }
+        actionState = .running(action)
+        updateUI()
+        Task { [weak self] in
+            // Let the button release/menu dismissal finish before display sleep.
+            if action == .dim { try? await Task.sleep(for: .milliseconds(400)) }
+            let code = await DisplayCommand.perform(command: action.rawValue)
+            guard let self else { return }
+            self.actionState = .finished(action, code)
+            if code != 0 { self.logger.error("Display action failed, exit code: \(code)") }
+            self.updateUI()
+        }
+    }
     @objc private func showWindow() {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -146,9 +175,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.isVisible = true
         statusItem.button?.setAccessibilityIdentifier("ScreenAwakeMenuBar")
         let menu = NSMenu()
+        menu.autoenablesItems = false
+        menuState.isEnabled = false
         menu.addItem(menuState)
         menuToggle.target = self
         menu.addItem(menuToggle)
+        menu.addItem(.separator())
+        wakeItem.target = self
+        dimItem.target = self
+        menu.addItem(wakeItem)
+        menu.addItem(dimItem)
         menu.addItem(.separator())
         showItem.target = self
         menu.addItem(showItem)
@@ -168,6 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.initialFirstResponder = panel.awakeSwitch
         panel.onToggle = { [weak self] enabled in self?.setEnabled(enabled) }
         panel.onGuide = { [weak self] in self?.showGuide() }
+        panel.onDisplayAction = { [weak self] action in self?.performDisplayAction(action) }
         panel.onLanguageChange = { [weak self] language in
             guard let self else { return }
             self.language = language

@@ -39,6 +39,8 @@ The **monitor icon** in the menu bar stays visible while the app runs. A sun ins
 
 Closing the window leaves the app running. Its menu bar icon or Dock icon reopens it; **⌘Q** quits and releases its keep-awake request. Your language choice is remembered; the keep-awake switch is not restored on launch.
 
+**Wake** wakes the display once, without turning on continuous keep-awake. **Dim** releases this app’s keep-awake request, then asks macOS to turn off the display. Both buttons are available in the main window and menu bar. While an action runs, display controls are disabled briefly; progress and errors appear in the main window.
+
 The **Setup guide** button explains the optional password setting and opens the relevant System Settings pane without changing it.
 
 The language menu lets you choose English or Traditional Chinese instantly. The initial choice follows your system language.

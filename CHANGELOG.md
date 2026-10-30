@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Wake and Dim buttons in the main window and menu bar.
+- Dim releases the app’s keep-awake request before asking macOS to turn off the display.
+- Background command execution keeps the UI responsive, with progress, error feedback and duplicate-action prevention.
+
 ## 1.2.1
 
 - A consistent monitor icon in the menu bar, with a sun inside when keep-awake is on.

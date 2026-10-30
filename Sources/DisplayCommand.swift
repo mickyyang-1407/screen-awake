@@ -1,21 +1,25 @@
 import Foundation
 import IOKit
 
-struct CommandResult {
+nonisolated struct CommandResult {
     let status: Int32
     let output: String
 }
 
 // Injectable only from Swift tests; production always uses fixed system executables.
-struct DisplayCommandRunner {
+nonisolated struct DisplayCommandRunner {
     var process: (String, [String]) throws -> CommandResult
     var requestIdle: () -> IOReturn
     static var live: Self { Self(process: DisplayCommand.runProcess, requestIdle: DisplayCommand.requestIdle) }
 }
 
-enum DisplayCommand {
-    static let version = "1.2.1"
+nonisolated enum DisplayCommand {
+    static let version = "1.3.0"
     static let usage = "Usage: ScreenAwake wake | dim | status | --help | --version"
+
+    @concurrent static func perform(command: String) async -> Int32 {
+        run(arguments: [command])
+    }
 
     static func run(arguments: [String], runner: DisplayCommandRunner = .live) -> Int32 {
         guard arguments.count == 1 else { writeError(usage); return 64 }
