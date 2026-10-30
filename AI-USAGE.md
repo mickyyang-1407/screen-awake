@@ -12,9 +12,17 @@
 >
 > Wake at 9 AM and Dim at 6 PM every day.
 
-The copied text includes your installation's exact path and asks the assistant to read the built-in `agent-help` guide. No long installation prompt, plug-in or GUI automation is needed. These controls require **1.5.0** or later.
+The copied text includes your installation's exact path and asks the assistant to read the built-in `agent-help` guide. No long installation prompt, plug-in or GUI automation is needed. Use **1.5.1** or later.
 
 The assistant needs command access on this Mac. A chat without local tools cannot execute commands.
+
+## Schedules without filling in a form
+
+Your AI can save schedules directly. Ask for daily times or a countdown, then ask it to **read back the saved settings and next action**. The app's Schedule window shows the same settings and lets you change them yourself.
+
+Say “Disable the daily schedule” to stop daily times, or “Cancel the countdown” to stop the countdown. Ask for both to stop both types. These actions leave current keep-awake unchanged; say “Turn off keep-awake” if you also want the system idle timeout to apply.
+
+If only the display is dark and this Mac and the local AI tools are still running, ask “Wake my display”. Ask “Keep my screen on” to wake and hold it on. Wake cannot unlock a Mac or wake a sleeping/powered-off computer. See the [full user guide](SETUP.md) for examples and optional password setup.
 
 ## Command reference for assistants
 

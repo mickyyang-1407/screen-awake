@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.2
+
+- The bilingual in-app setup guide now starts with the download, Copy instructions for AI and natural-language workflow.
+- Explain AI-created daily schedules and countdowns, how to cancel each, and how to check the next action.
+- Expand the English and Traditional Chinese GitHub tutorials with examples, display-wake limits and optional password setup.
+
 ## 1.3.0
 
 - Wake and Dim buttons in the main window and menu bar.

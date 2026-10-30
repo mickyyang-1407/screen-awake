@@ -18,6 +18,8 @@ The copied text includes this installation's exact path. The AI reads the built-
 
 You can also use all controls yourself. The language menu switches English and Traditional Chinese.
 
+The [full user guide](SETUP.md) covers example requests, AI-created schedules, cancellation and optional password setup. A short offline version is available in the app's **Setup guide**.
+
 | Control | What it does |
 | --- | --- |
 | Keep display awake — ON | Keeps the display on while the app runs. |
@@ -61,7 +63,9 @@ Click **Copy instructions for AI** in the app or menu bar and paste the result i
 
 Your AI can wake the screen, turn continuous keep-awake on/off, set daily times, start a countdown and read the saved result. New schedules start the app in the background if needed. [AI command reference](AI-USAGE.md).
 
-An AI needs permission to run commands on this Mac. Wake cannot unlock a locked session or wake a sleeping/powered-off computer. The optional password setup stays under your control.
+**Your AI can save schedules directly; you do not have to fill in the app's form.** Ask “Wake at 9 AM and Dim at 6 PM every day”, then ask it to read back the next execution time. Disabling daily scheduling and canceling a countdown are separate actions; request both to stop both types.
+
+If the Mac and local AI command tools are still running, your AI can request Wake even when the display is dark. Wake cannot unlock a locked session or wake a sleeping/powered-off computer. The optional password setup stays under your control.
 
 ## For recording scripts
 

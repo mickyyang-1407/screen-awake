@@ -75,6 +75,16 @@ final class SetupGuideView: NSView {
         }
         paragraph(text.guideIntro)
         y += 8
+        paragraph(text.guideAIHeading, size: 17, weight: .semibold)
+        for (index, step) in text.guideAISteps.enumerated() {
+            paragraph("\(index + 1). \(step.0)", weight: .semibold)
+            paragraph(step.1)
+            y += 12
+        }
+        paragraph(text.guideAILimits)
+        y += 16
+        paragraph(text.guideSecurityHeading, size: 17, weight: .semibold)
+        paragraph(text.guideSecurityIntro)
         for (index, step) in text.guideSteps.enumerated() {
             paragraph("\(index + 1). \(step.0)", weight: .semibold)
             paragraph(step.1)

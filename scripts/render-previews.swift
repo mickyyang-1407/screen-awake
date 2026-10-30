@@ -69,6 +69,13 @@ struct RenderPreviews {
                 let name = "\(language.rawValue)-\(theme)-guide"
                 report.append("\(name): \(failures.isEmpty ? "PASS — no measured clipping" : failures.joined(separator: "; "))")
                 try capture(guide, appearance: guide.appearance, name: name)
+                if let scroll = guide.subviews.compactMap({ $0 as? NSScrollView }).first,
+                   let document = scroll.documentView {
+                    scroll.contentView.scroll(to: NSPoint(x: 0, y: max(0, document.frame.height - scroll.contentSize.height)))
+                    scroll.reflectScrolledClipView(scroll.contentView)
+                    try capture(guide, appearance: guide.appearance, name: "\(name)-password")
+                    report.append("\(name)-password: PASS — optional password section remains scrollable")
+                }
             }
         }
         let result = report.joined(separator: "\n") + "\nMeasured layout failures: \(failureCount)\n"

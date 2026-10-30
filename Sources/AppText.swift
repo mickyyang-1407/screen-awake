@@ -45,8 +45,8 @@ struct AppText {
     var switchTitle: String { chinese ? "保持螢幕開啟" : "Keep display awake" }
     var switchHelp: String { chinese ? "關閉後，螢幕可依系統的閒置設定關閉。" : "Turn off to let the display follow the system idle setting." }
     var sessionNote: String { chinese ? "只在本次開啟期間生效" : "For this session only" }
-    var guideTitle: String { chinese ? "螢幕暗掉後，不必輸入密碼" : "Wake without a password" }
-    var guideSubtitle: String { chinese ? "錄影前的設定教學" : "A short setup guide for recording" }
+    var guideTitle: String { chinese ? "螢幕常亮使用教學" : "Use Screen Awake" }
+    var guideSubtitle: String { chinese ? "AI 操作、排程與選用免密碼設定" : "AI controls, schedules and optional password setup" }
     var copyAITitle: String { chinese ? "複製給 AI" : "Copy instructions for AI" }
     var copyAIHelp: String { chinese ? "貼給可執行本機指令的 AI，即可使用喚醒、常亮與排程。" : "Paste into an AI with local command access to use wake, keep-awake and schedules." }
     var aiCopied: String { chinese ? "已複製 · 貼給 AI 即可" : "Copied · Paste into your AI" }
@@ -73,7 +73,23 @@ struct AppText {
             return action == .wake ? "Display wake requested." : "Display sleep requested. Move the mouse to wake it."
         }
     }
-    var guideIntro: String { chinese ? "常亮開關本身不需要這項設定。只有需要讓螢幕關閉後，仍能由腳本喚醒並繼續錄影時，才需要以下步驟。" : "The keep-awake switch works without this setup. Follow these steps only if a script needs to wake the display and resume recording after it turns off." }
+    var guideIntro: String { chinese ? "安裝後，直接用開關和按鈕，也能把喚醒、常亮與排程交給 AI。一般使用不需要更改密碼設定。" : "Use the switches yourself, or let your AI control wake, keep-awake and schedules. Normal use needs no password-setting changes." }
+    var guideAIHeading: String { chinese ? "三步交給 AI" : "Three steps with your AI" }
+    var guideAISteps: [(String, String)] {
+        if chinese { return [
+            ("在主視窗按「複製給 AI」", "把複製的文字貼給 Claude Code 或可執行這台 Mac 本機指令的 AI。文字已帶入安裝路徑，AI 會讀取 App 內建說明；不需要外掛或操作畫面的工具。"),
+            ("直接說你要的動作或時間", "例如：「幫我保持亮屏」、「半小時後關屏」、「每天早上九點亮屏、下午六點關屏」。AI 可以直接儲存每日排程與啟動倒數，不必由你手動填寫。只想喚醒一次，就說「幫我喚醒螢幕」。"),
+            ("請 AI 確認結果，並讓 App 繼續執行", "AI 應讀回排程與下一次動作。要停止時可說「停用每日排程」或「取消倒數」；兩者分開控制。關閉視窗仍有效，⌘Q 結束 App 就停止；重開只恢復未來事件，過期不補執行。時間依 Mac 目前時區。")
+        ] }
+        return [
+            ("Click Copy instructions for AI in the main window", "Paste into Claude Code or an AI with command access on this Mac. The text includes the installed path and points to the app's built-in guide. No plug-in or GUI automation is needed."),
+            ("Ask for an action or a time", "Try “Keep my screen on”, “Dim in 30 minutes”, or “Wake at 9 AM and Dim at 6 PM every day”. Your AI can save daily schedules and start countdowns directly. For a one-time wake, say “Wake my display”."),
+            ("Check the result and keep the app running", "Ask your AI to read back the saved schedule and next action. “Disable the daily schedule” and “Cancel the countdown” control them separately. Closing windows is fine; ⌘Q stops execution. Reopening resumes future events only. Times follow this Mac's current time zone.")
+        ]
+    }
+    var guideAILimits: String { chinese ? "螢幕已暗、但 Mac 仍在運作且 AI 可以執行本機指令時，AI 也能送出 Wake。Wake 只喚醒一次，常亮才會持續保持開啟；兩者都無法解鎖 Mac，或喚醒整台睡眠／關機中的電腦。純聊天網頁沒有本機工具，無法直接操作。" : "If only the display is off and the Mac and local AI tools are still running, your AI can request Wake. Wake is one-time; keep-awake holds the display on. Neither unlocks the Mac or wakes a sleeping/powered-off computer. A chat without local tools cannot control this Mac." }
+    var guideSecurityHeading: String { chinese ? "選用：關屏後直接回桌面" : "Optional: return without a password" }
+    var guideSecurityIntro: String { chinese ? "只有希望關屏後喚醒時不再要求認證，才需要以下設定。由你親自決定與變更；AI 不會代改安全設定。" : "Use the following setup only if you want to return after display sleep without authentication. Decide and change these settings yourself; the AI does not change them for you." }
     var guideSteps: [(String, String)] {
         if chinese { return [
             ("如果選項是灰色，先處理 iPhone 鏡像輸出", "在 Mac 開啟「iPhone 鏡像輸出」。從上方選單選 iPhone 鏡像輸出 → 設定，將認證方式改為「每次都詢問」（Ask every time）。選項原本可修改，就跳到下一步。"),
