@@ -62,6 +62,14 @@ AWAKE="$HOME/Desktop/螢幕常亮.app/Contents/MacOS/ScreenAwake"
 
 The CLI works without the GUI app running. Continuous keep-awake and schedules require the GUI app to remain running. If its keep-awake switch is on, turn that switch off before using CLI `dim`; the GUI Dim button releases its own request automatically.
 
+## Can the assistant set a schedule?
+
+In version 1.4.0, schedules are configured through the GUI. An assistant with macOS app-control tools can do this on your behalf; it is not limited to human clicks. Give it the times and actions you want, then have it open **Schedule**, fill **Daily** or **Countdown**, save/start, and verify the displayed next action.
+
+An assistant with terminal access alone can use `wake`, `dim` and `status`, but there is no schedule CLI command in this version. It should not invent one or write the app's private preferences to simulate configuration. If it cannot operate Mac apps, use the schedule page yourself.
+
+Do not choose another person's daily times without their instructions. Keep the GUI app running for saved schedules to execute; closing its window is fine.
+
 ## What the assistant can expect
 
 - **Only the display is off:** the assistant can request a wake while the Mac and its command tools are still running.
