@@ -40,6 +40,8 @@ Check this yourself. A successful command or a visible display wake alone does n
 - **Setup guide** opens these instructions inside the app, with a button to open Lock Screen settings.
 - **⌘Q** quits and releases the app’s request.
 
+For an AI assistant, see [AI usage and the copy-ready instruction](AI-USAGE.md). The assistant needs local command access; a link alone does not give it control of your Mac.
+
 ## Wake → record → dim
 
 Start from an unlocked desktop. Finish recording before requesting display sleep:

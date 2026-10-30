@@ -51,6 +51,12 @@ The keep-awake switch works with your current password settings. If you want to 
 
 The app’s **Setup guide** button also explains the settings and opens the relevant System Settings pane. Security settings are changed by you. Wake cannot unlock an already locked Mac; an explicit lock by you or another app still requires unlocking.
 
+## Use it with an AI assistant
+
+An assistant with local command access can call Screen Awake before a task that needs the display. See [AI usage and a copy-ready instruction](AI-USAGE.md) for the app paths, commands and limits. Paste the instruction into your task, or add it to your project's existing AI instructions with the correct local path.
+
+A GitHub link does not automatically configure an assistant. Wake works while the Mac is running; it cannot unlock a locked session or wake a sleeping or powered-off computer.
+
 ## For recording scripts
 
 The downloaded app already includes a CLI. With the app in Applications:
