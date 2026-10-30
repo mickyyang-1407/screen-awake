@@ -53,6 +53,15 @@ nonisolated struct AgentReply: Codable {
 }
 
 @MainActor
+enum AgentPreferences {
+    static func open(identifier: String = "com.mickyyang.screen-awake") -> UserDefaults {
+        // Foundation rejects using an app's own identifier as a suite name.
+        if Bundle.main.bundleIdentifier == identifier { return .standard }
+        return UserDefaults(suiteName: identifier) ?? .standard
+    }
+}
+
+@MainActor
 enum AgentOffline {
     static func apply(_ operation: AgentOperation, settings: inout ScheduleSettings) -> Bool {
         switch operation {

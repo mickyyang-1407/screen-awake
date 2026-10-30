@@ -6,6 +6,10 @@ struct AgentChecks {
         let arguments = Array(CommandLine.arguments.dropFirst())
         if arguments.first == "--fixture-server", arguments.count == 3 {
             let suite = arguments[1], channel = arguments[2]
+            if let ownID = Bundle.main.bundleIdentifier {
+                // The bundled fixture must use standard preferences for its own domain.
+                _ = AgentPreferences.open(identifier: ownID).object(forKey: "fixture-missing-key")
+            }
             let defaults = UserDefaults(suiteName: suite)!
             let schedules = ScheduleController(defaults: defaults)
             schedules.onEvent = { _ in true } // Fixture callback only; no power-management code is linked.
