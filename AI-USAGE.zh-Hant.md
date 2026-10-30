@@ -1,81 +1,50 @@
-# 讓 AI 使用螢幕常亮
+# 下載、打開、貼給 AI
 
-[English](AI-USAGE.md) · [主要說明](README.zh-Hant.md)
+[English](AI-USAGE.md) · [下載 App](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.dmg)
 
-只要 AI 有權限在你的 Mac 執行本機指令，就能在需要畫面的工作前呼叫螢幕常亮。沒有本機指令工具的聊天視窗無法代為執行；螢幕常亮本身不會連接 AI 服務。
+1. 安裝並打開螢幕常亮。
+2. 按 **複製給 AI**，貼到 Claude Code 或有本機指令工具的 AI。
+3. 直接告訴它你想做什麼：
 
-你可以把下面這段貼給 AI，也能在填好安裝路徑後，加入該專案既有的 AI 工作指引。提供 GitHub 連結可以讓 AI 讀取說明，但不會自動替每一個 AI 完成設定。
+> 幫我保持螢幕開啟。
+>
+> 半小時後關屏。
+>
+> 每天早上九點亮屏，下午六點關屏。
 
-如果尚未安裝，可直接使用 [Claude Code 完整下載安裝 prompt](CLAUDE-CODE-INSTALL.zh-Hant.md)。
+複製的文字會帶入實際安裝位置，請 AI 先讀取 App 內建的 `agent-help`。不需要長篇安裝 prompt、額外外掛或操作 App 畫面的工具。這些 AI 控制從 **1.5.0** 開始提供。
 
-## 直接複製給 AI
+AI 需要這台 Mac 的本機指令權限；只有聊天能力的 AI 無法代為執行。
 
-```text
-這台 Mac 已安裝「螢幕常亮 Screen Awake」。執行需要畫面的工作時，
-如有需要，請先用它的 CLI 喚醒螢幕，再開始操作。
+## 給 AI 的指令參考
 
-先依序檢查以下 App 位置，不要掃描其他磁碟：
-/Applications/Screen Awake.app
-~/Applications/Screen Awake.app
-~/Desktop/Screen Awake.app
-~/Desktop/螢幕常亮.app
-
-App 內的執行檔是 Contents/MacOS/ScreenAwake。
-使用找到的實際完整路徑，並將整個路徑放在引號內。
-這些位置都沒有時，請問我安裝在哪裡。
-
-先執行 status 讀取關屏後的密碼要求，需要喚醒時執行 wake。
-status 無法判斷 Mac 目前是否已解鎖。
-wake 回傳成功只代表喚醒要求被接受；若有可用的觀察工具，請確認畫面
-狀態後再宣稱可以操作。無法觀察時，只回報已送出喚醒要求。
-
-只有我要求關閉螢幕，或任務明確包含完成後關屏時，才執行 dim。
-請先完成工作，再關閉螢幕。
-
-Wake 只喚醒一次，無法解鎖 Mac，也無法喚醒睡眠或關機中的整台電腦。
-若需要密碼或 Touch ID，請讓我親自解鎖；保留密碼與系統安全設定。
-```
-
-單次交辦也可以簡單說：「這次操作前，先用 Screen Awake 喚醒螢幕，完成後不要執行 Dim。」第一次請附上 App 的安裝路徑。
-
-## 指令怎麼用
-
-一般安裝在 Applications 時：
+以 App 內的 `agent-help` 為準。以下假設安裝在 Applications；實際路徑由「複製給 AI」帶入。
 
 ```sh
 AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
-"$AWAKE" status
-"$AWAKE" wake
+"$AWAKE" agent-help
+"$AWAKE" awake on
+"$AWAKE" awake off
+"$AWAKE" schedule daily 09:00 18:00
+"$AWAKE" schedule timer 30 dim
+"$AWAKE" schedule show
+"$AWAKE" schedule off
+"$AWAKE" schedule cancel
 ```
 
-如果 App 放在桌面，第一行改為實際檔名，例如：
+- `wake` 喚醒一次；`awake on` 喚醒並持續常亮；`awake off` 恢復原本的閒置設定。
+- `dim` 先釋放執行中 App 的常亮要求，再請求關屏。只在使用者要求時執行。
+- `schedule daily` 依序指定 Wake／Dim 時間，儲存並啟用；夜間跨日也可。任一時間可填 `off`，但至少保留一個動作。預設 Wake 後保持常亮；加 `--no-keep-awake` 可只喚醒一次。
+- `schedule timer` 設定 1–1440 整數分鐘的倒數，動作為 `wake` 或 `dim`；會取代原倒數。
+- `schedule off` 停用每日排程，保留倒數；`schedule cancel` 取消倒數，保留每日排程。兩者都不會改變目前常亮狀態。
+- `schedule show` 回傳 JSON，包含 App 是否執行、常亮狀態、儲存的排程與下一次動作。`status` 只讀取關屏後的密碼要求。
 
-```sh
-AWAKE="$HOME/Desktop/螢幕常亮.app/Contents/MacOS/ScreenAwake"
-```
+設定新排程或開啟常亮時，App 若未執行會在背景開啟。讀取狀態、取消排程或關閉常亮，不會啟動已結束的 App。請檢查 JSON 的 `success`、回傳狀態及程序退出碼；逾時代表結果不確定，先讀取狀態再決定下一步，不要盲目重試。
 
-| 指令 | 用途 |
-| --- | --- |
-| `status` | 讀取關屏後的密碼要求；不代表目前螢幕亮暗或使用者是否已解鎖。 |
-| `wake` | 請求喚醒螢幕，等待兩秒的使用者活動要求結束後退出；之後仍依原本的閒置時間運作。 |
-| `dim` | 請求關閉顯示器；只在使用者要求時，於工作完成後執行。 |
+## 使用邊界
 
-CLI 不需要 GUI App 正在執行。持續常亮與排程則需要 GUI App 保持執行。如果 GUI 常亮已開啟，使用 CLI `dim` 前請先關閉常亮開關；GUI 的 Dim 按鈕會自動釋放自己的常亮要求。
+App 必須持續執行才能保持常亮或執行排程；關閉視窗沒關係，退出 App 就停止。重開後只恢復未來事件，過期不補執行。時間依 Mac 目前時區。
 
-## AI 可以設定排程嗎？
+Wake 可以點亮顯示器，但無法解鎖 Mac，也無法喚醒整台睡眠或關機中的電腦。密碼與 Touch ID 由使用者親自處理；[免密碼設定教學](SETUP.zh-Hant.md)是選用設定，不由 AI 代改。
 
-1.4.0 的排程透過 GUI 設定。有 macOS App 操作工具的 AI，可以代你完成，不限定只能由人點選。告訴它想要的時間與動作，再讓它打開 **排程**，填好 **每日時段** 或 **倒數計時**，儲存／開始後確認顯示的下一次動作。
-
-只有終端機能力的 AI，目前能用 `wake`、`dim`、`status`，還沒有排程 CLI 指令。不要自行杜撰指令，也不要直接寫 App 私有偏好設定來假裝設定完成；若無法操作 Mac App，請使用排程頁設定。
-
-沒有指定時間時，不要替其他使用者決定每天的作息。已設定的排程仍需 GUI App 持續執行，關閉視窗不影響。
-
-## 哪些情況可以使用
-
-- **只是顯示器暗掉**：Mac 與本機工具仍在運作時，AI 可以請求喚醒。
-- **Mac 已鎖定**：可以亮屏，但仍需你親自解鎖。[免密碼設定教學](SETUP.zh-Hant.md)調整的是關屏後的認證要求，不能取消你或其他 App 送出的立即鎖定。
-- **整台電腦睡眠或關機**：CLI 無法將它喚醒；若有需要，另由使用者設定系統喚醒方式。
-
-Wake 不會讓螢幕永久常亮。較長的工作可以啟用 GUI 常亮開關，或在每日排程中勾選 **Wake 後保持常亮**；這與單次喚醒是兩件事。
-
-如果電腦操作工具又將 Mac 鎖定，請停下來讓使用者親自解鎖，不要停用該工具的鎖定保護，也不要把喚醒成功當成已經通過認證。
+若只有單次喚醒，之後仍遵循原本的閒置時間。不要把指令成功當成已解鎖或畫面會永久維持亮／暗；無法觀察時，只回報要求被接受。

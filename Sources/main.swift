@@ -14,7 +14,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private var statusItem: NSStatusItem!
     private let panel = AwakePanelView()
+    var showOnLaunch = true
     private let schedules = ScheduleController()
+    private var agentService: AgentService!
+    private var agentConnection: AgentConnection!
+    private let copyAIItem = NSMenuItem(title: "", action: #selector(copyAIInstructions), keyEquivalent: "")
     private let scheduleView = ScheduleView()
     private var scheduleWindow: NSWindow?
     private let scheduleItem = NSMenuItem(title: "", action: #selector(showSchedule), keyEquivalent: "")
@@ -45,8 +49,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if event.keepAwake { self.setEnabled(true) }
             return self.performDisplayAction(event.action)
         }
+        agentService = AgentService(schedules: schedules)
+        agentService.getAwake = { [weak self] in self?.assertionID != nil }
+        agentService.setAwake = { [weak self] enabled in
+            guard let self, !self.actionState.isRunning else { return false }
+            return self.setEnabled(enabled)
+        }
+        agentService.wake = { [weak self] completion in self?.performDisplayAction(.wake, completion: completion) ?? false }
+        agentService.dim = { [weak self] completion in self?.performDisplayAction(.dim, completion: completion) ?? false }
+        agentConnection = AgentConnection { [weak self] operation, completion in
+            self?.agentService.handle(operation, completion: completion)
+        }
+        agentConnection.start()
         schedules.start()
-        showWindow()
+        if showOnLaunch { showWindow() }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -57,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        agentConnection?.stop()
         schedules.stop()
         if let id = assertionID {
             let result = IOPMAssertionRelease(id)
@@ -66,7 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func setEnabled(_ enabled: Bool) {
+    @discardableResult
+    private func setEnabled(_ enabled: Bool) -> Bool {
         if enabled, assertionID == nil {
             var newID: IOPMAssertionID = 0
             let result = IOPMAssertionCreateWithName(
@@ -74,15 +92,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 IOPMAssertionLevel(kIOPMAssertionLevelOn),
                 "ScreenAwake - Display stays on" as CFString, &newID
             )
-            guard result == kIOReturnSuccess else { reportFailure(enabling: true, code: result); return }
+            guard result == kIOReturnSuccess else { reportFailure(enabling: true, code: result); return false }
             assertionID = newID
         } else if !enabled, let id = assertionID {
             let result = IOPMAssertionRelease(id)
-            guard result == kIOReturnSuccess else { reportFailure(enabling: false, code: result); return }
+            guard result == kIOReturnSuccess else { reportFailure(enabling: false, code: result); return false }
             assertionID = nil
         }
         powerError = nil
         updateUI()
+        return true
     }
 
     private func reportFailure(enabling: Bool, code: IOReturn) {
@@ -113,6 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quitItem.title = text.quit
         appQuitItem.title = text.quit
         controlsItem.title = text.menuBarControls
+        copyAIItem.title = text.copyAITitle
         guideItem.title = text.guideButton
         statusGuideItem.title = text.guideButton
         helpMenuItem.title = text.helpMenu
@@ -129,11 +149,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func dimDisplay() { performDisplayAction(.dim) }
 
     @discardableResult
-    private func performDisplayAction(_ action: DisplayAction) -> Bool {
+    private func performDisplayAction(_ action: DisplayAction, completion: ((Int32) -> Void)? = nil) -> Bool {
         guard !actionState.isRunning else { return false }
         if action == .dim {
             setEnabled(false)
-            guard assertionID == nil else { return true }
+            guard assertionID == nil else { completion?(1); return true }
         }
         actionState = .running(action)
         updateUI()
@@ -145,8 +165,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.actionState = .finished(action, code)
             if code != 0 { self.logger.error("Display action failed, exit code: \(code)") }
             self.updateUI()
+            completion?(code)
         }
         return true
+    }
+    @objc private func copyAIInstructions() {
+        guard let executable = Bundle.main.executablePath else { return }
+        let invitation = AgentGuide.invitation(language: language, executable: executable)
+        NSPasteboard.general.clearContents()
+        if NSPasteboard.general.setString(invitation, forType: .string) { panel.confirmAICopied() }
     }
     @objc private func showWindow() {
         window.makeKeyAndOrderFront(nil)
@@ -228,6 +255,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(menuNextEvent)
         scheduleItem.target = self
         menu.addItem(scheduleItem)
+        copyAIItem.target = self
+        menu.addItem(copyAIItem)
         menu.addItem(.separator())
         menu.addItem(showItem)
         statusGuideItem.target = self
@@ -245,6 +274,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.contentView = panel
         window.initialFirstResponder = panel.awakeSwitch
         panel.onToggle = { [weak self] enabled in self?.setEnabled(enabled) }
+        panel.onCopyAI = { [weak self] in self?.copyAIInstructions() }
         panel.onSchedule = { [weak self] in self?.showSchedule() }
         panel.onGuide = { [weak self] in self?.showGuide() }
         panel.onDisplayAction = { [weak self] action in self?.performDisplayAction(action) }
@@ -261,11 +291,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 struct ScreenAwake {
     @MainActor static func main() {
         let arguments = Array(CommandLine.arguments.dropFirst())
-        if !arguments.isEmpty {
-            exit(DisplayCommand.run(arguments: arguments))
+        let background = arguments == ["--background"]
+        if !arguments.isEmpty && !background {
+            exit(AgentCLI.handles(arguments) ? AgentCLI.run(arguments) : DisplayCommand.run(arguments: arguments))
         }
         let app = NSApplication.shared
         let delegate = AppDelegate()
+        delegate.showOnLaunch = !background
         app.delegate = delegate
         app.setActivationPolicy(.regular)
         withExtendedLifetime(delegate) { app.run() }

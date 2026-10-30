@@ -45,7 +45,7 @@
 - 每次啟動都預設 OFF；只記住介面語言。
 - 點 **設定教學** 可以在 App 內閱讀步驟，也能按按鈕打開 Lock Screen 設定。
 
-AI 的使用方式與可直接貼上的文字，請看 [AI 使用說明](AI-USAGE.zh-Hant.md)。AI 需要本機指令工具，只有 GitHub 連結不會取得 Mac 的操作能力。
+在 App 按 **複製給 AI**，貼給 AI 即可帶入實際安裝路徑；更多內容見 [AI 使用說明](AI-USAGE.zh-Hant.md)。AI 需要本機指令工具。
 
 ## 5. 讓錄影腳本喚醒、錄完再關閉螢幕
 
@@ -60,7 +60,7 @@ AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
 "$AWAKE" dim
 ```
 
-從原始碼建置也能使用 `./build/ScreenAwake`。`wake` 的兩秒喚醒要求結束後，不留下持續常亮程序；錄影期間仍遵循系統原本的閒置時間。錄影超過該時間時，可先在 GUI 啟用常亮，錄完手動關閉後再執行 `dim`。
+從原始碼建置也能使用 `./build/ScreenAwake`。`wake` 的兩秒喚醒要求結束後，不留下持續常亮程序；錄影期間仍遵循系統原本的閒置時間。錄影超過該時間時，可先用 `awake on` 啟用常亮；`dim` 會先釋放執行中 App 的常亮要求，再關屏。
 
 `dim` 請求關閉所有顯示器，不會讓整台 Mac 睡眠、修改亮度或改寫系統休眠時間。若 macOS 拒絕，CLI 會回傳非零狀態並列出原因。其他使用者輸入或 App 可能立刻重新喚醒螢幕。
 

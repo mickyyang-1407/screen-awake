@@ -14,8 +14,8 @@ nonisolated struct DisplayCommandRunner {
 }
 
 nonisolated enum DisplayCommand {
-    static let version = "1.4.0"
-    static let usage = "Usage: ScreenAwake wake | dim | status | --help | --version"
+    static let version = AppVersion.current
+    static let usage = "Usage: ScreenAwake wake | dim | status | awake on|off | schedule ... | agent-help | --help | --version"
 
     @concurrent static func perform(command: String) async -> Int32 {
         run(arguments: [command])
@@ -30,6 +30,7 @@ nonisolated enum DisplayCommand {
                   wake    Wake the display with a two-second user-activity assertion.
                   dim     Request display sleep. Does not change system timeouts.
                   status  Read the display-sleep password requirement; changes nothing.
+                  agent-help  Complete AI guide, including keep-awake and schedule commands.
                 Unlock your Mac yourself before recording. To wake without a password,
                 use System Settings > Lock Screen > Require password ... > Never.
                 If greyed out, use iPhone Mirroring > Settings > Ask every time first.

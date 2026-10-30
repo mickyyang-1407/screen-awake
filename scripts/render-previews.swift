@@ -26,6 +26,7 @@ struct RenderPreviews {
                 let cases: [(name: String, enabled: Bool, error: PowerError?, action: DisplayActionState)] = [
                     ("on", true, nil, .idle),
                     ("off", false, nil, .idle),
+                    ("ai-copied", false, nil, .idle),
                     ("error-enabling", false, PowerError(enabling: true, code: Int32.min), .idle),
                     ("error-disabling", true, PowerError(enabling: false, code: Int32.min), .idle),
                     ("waking", true, nil, .running(.wake)),
@@ -39,6 +40,7 @@ struct RenderPreviews {
                     let panel = AwakePanelView()
                     panel.appearance = NSAppearance(named: appearance)
                     panel.update(enabled: preview.enabled, language: language, error: preview.error, actionState: preview.action)
+                    if preview.name == "ai-copied" { panel.confirmAICopied() }
                     let name = "\(language.rawValue)-\(theme)-\(preview.name)"
                     let failures = panel.measuredLayoutFailures()
                     failureCount += failures.count

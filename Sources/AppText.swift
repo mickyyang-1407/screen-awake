@@ -47,6 +47,9 @@ struct AppText {
     var sessionNote: String { chinese ? "只在本次開啟期間生效" : "For this session only" }
     var guideTitle: String { chinese ? "螢幕暗掉後，不必輸入密碼" : "Wake without a password" }
     var guideSubtitle: String { chinese ? "錄影前的設定教學" : "A short setup guide for recording" }
+    var copyAITitle: String { chinese ? "複製給 AI" : "Copy instructions for AI" }
+    var copyAIHelp: String { chinese ? "貼給可執行本機指令的 AI，即可使用喚醒、常亮與排程。" : "Paste into an AI with local command access to use wake, keep-awake and schedules." }
+    var aiCopied: String { chinese ? "已複製 · 貼給 AI 即可" : "Copied · Paste into your AI" }
     var guideButton: String { chinese ? "設定教學" : "Setup guide" }
     var openSettings: String { chinese ? "打開鎖定畫面設定" : "Open Lock Screen settings" }
     var done: String { chinese ? "完成" : "Done" }

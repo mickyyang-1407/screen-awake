@@ -10,9 +10,13 @@ macOS 14 or later · Apple silicon and Intel · English and 繁體中文 · MIT
 
 ## Start here
 
-1. Download the DMG and drag **Screen Awake** into **Applications**. Alternatively, unzip the ZIP.
-2. Open **Screen Awake**. Release downloads are Developer ID signed and notarized.
-3. Use the switch or the **Wake** and **Dim** buttons. The language menu switches between English and Traditional Chinese.
+1. [Download the DMG](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.dmg) and drag **Screen Awake** into **Applications**.
+2. Open the app and click **Copy instructions for AI**.
+3. Paste into Claude Code or another AI with local command access. Then just ask: **“Keep my screen on”**, **“Dim in 30 minutes”**, or **“Wake at 9 AM and Dim at 6 PM every day.”**
+
+The copied text includes this installation's exact path. The AI reads the built-in guide and controls wake, keep-awake and schedules through commands; it needs no GUI automation. Signed and Apple notarized. No account, plug-in or developer setup.
+
+You can also use all controls yourself. The language menu switches English and Traditional Chinese.
 
 | Control | What it does |
 | --- | --- |
@@ -53,9 +57,11 @@ The app’s **Setup guide** button also explains the settings and opens the rele
 
 ## Use it with an AI assistant
 
-An assistant with local command access can call Screen Awake before a task that needs the display. See [AI usage and a copy-ready instruction](AI-USAGE.md) for the app paths, commands and limits. Paste the instruction into your task, or add it to your project's existing AI instructions with the correct local path.
+Click **Copy instructions for AI** in the app or menu bar and paste the result into your assistant. It runs a read-only `agent-help` command from the installed app, so the instructions work offline and include the correct local path.
 
-A GitHub link does not automatically configure an assistant. Wake works while the Mac is running; it cannot unlock a locked session or wake a sleeping or powered-off computer.
+Your AI can wake the screen, turn continuous keep-awake on/off, set daily times, start a countdown and read the saved result. New schedules start the app in the background if needed. [AI command reference](AI-USAGE.md).
+
+An AI needs permission to run commands on this Mac. Wake cannot unlock a locked session or wake a sleeping/powered-off computer. The optional password setup stays under your control.
 
 ## For recording scripts
 
@@ -69,7 +75,7 @@ AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
 "$AWAKE" dim
 ```
 
-`wake` checks the display-off password requirement and waits for its two-second user-activity assertion to end. It leaves no continuous keep-awake process. The normal display timeout still applies during recording; for a longer recording, explicitly enable the GUI switch and turn it off before calling CLI `dim`.
+`wake` checks the display-off password requirement and waits for its two-second user-activity assertion to end. It leaves no continuous keep-awake process. The normal display timeout still applies during recording; for a longer recording, use `awake on` before recording. `dim` releases the running app’s keep-awake request before sleeping the display.
 
 `dim` requests display sleep. Exit 0 means the request was accepted; input or another app may wake the display again. Failures return nonzero, including when macOS prints a rejection but returns 0 itself. `--help` lists the commands; `--version` prints the version. These commands do not change system timeouts or security settings and require no sudo.
 
@@ -92,7 +98,7 @@ open "build/Screen Awake.app"
 
 The native SDK build produces a universal app with a local ad-hoc signature. No signing certificate is needed and no dependencies are downloaded. `zsh scripts/build.sh --cli-only` produces `build/ScreenAwake` without packaging the GUI bundle.
 
-Run `zsh scripts/check.sh` for isolated CLI and schedule checks (private preferences, local timer callbacks, no live display or settings changes), and `zsh scripts/render-previews.sh` for bilingual state, schedule and guide previews.
+Run `zsh scripts/check.sh` for isolated CLI, schedule and AI-control checks (private preferences, local timer callbacks, no live display or settings changes), and `zsh scripts/render-previews.sh` for bilingual state, schedule and guide previews.
 
 Bug reports and focused improvements are welcome. Please include your macOS version, chosen language and expected behavior when opening an issue.
 

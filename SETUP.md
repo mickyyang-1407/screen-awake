@@ -40,7 +40,7 @@ Check this yourself. A successful command or a visible display wake alone does n
 - **Setup guide** opens these instructions inside the app, with a button to open Lock Screen settings.
 - **⌘Q** quits and releases the app’s request.
 
-For an AI assistant, see [AI usage and the copy-ready instruction](AI-USAGE.md). The assistant needs local command access; a link alone does not give it control of your Mac.
+For an AI assistant, click **Copy instructions for AI** in the app and paste the result. It includes the exact local path. See [AI usage](AI-USAGE.md); local command access is required.
 
 ## Wake → record → dim
 
@@ -54,7 +54,7 @@ AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
 "$AWAKE" dim
 ```
 
-Source builds also provide `./build/ScreenAwake`. Wake ends its user-activity assertion after two seconds and leaves no continuous keep-awake process. The existing system idle timeout applies during recording. For longer recordings, explicitly enable the GUI switch and turn it off after recording before calling `dim`.
+Source builds also provide `./build/ScreenAwake`. Wake ends its user-activity assertion after two seconds and leaves no continuous keep-awake process. The existing system idle timeout applies during recording. For longer recordings, use `awake on`; `dim` releases the running app’s own keep-awake request before requesting sleep.
 
 `dim` requests sleep for all displays. It does not sleep the computer, change brightness, or write system timeouts. A rejected request returns nonzero with an explanation. User input or another app can wake the display again immediately.
 

@@ -2,16 +2,18 @@ import AppKit
 
 @MainActor
 final class AwakePanelView: NSView {
-    static let panelSize = NSSize(width: 420, height: 458)
+    static let panelSize = NSSize(width: 420, height: 504)
     override var isFlipped: Bool { true }
     let awakeSwitch = NSSwitch(frame: NSRect(x: 336, y: 211, width: 42, height: 28))
     let languagePopup = NSPopUpButton(frame: NSRect(x: 244, y: 24, width: 154, height: 28), pullsDown: false)
+    let copyAIButton = NSButton(title: "", target: nil, action: nil)
     let scheduleButton = NSButton(title: "", target: nil, action: nil)
     let guideButton = NSButton(title: "", target: nil, action: nil)
     let wakeButton = NSButton(title: "", target: nil, action: nil)
     let dimButton = NSButton(title: "", target: nil, action: nil)
     var onToggle: ((Bool) -> Void)?
     var onLanguageChange: ((AppLanguage) -> Void)?
+    var onCopyAI: (() -> Void)?
     var onGuide: (() -> Void)?
     var onSchedule: (() -> Void)?
     var onDisplayAction: ((DisplayAction) -> Void)?
@@ -23,6 +25,8 @@ final class AwakePanelView: NSView {
     private let languageLabel = NSTextField(labelWithString: "")
     private let footer = NSTextField(wrappingLabelWithString: "")
     private let errorLabel = NSTextField(wrappingLabelWithString: "")
+    private var aiCopied = false
+    private var language = AppLanguage.english
     private var enabled = false
     private var messageIsFailure = false
 
@@ -35,7 +39,7 @@ final class AwakePanelView: NSView {
         configure(errorLabel, rect: NSRect(x: 24, y: 270, width: 372, height: 35), size: 11)
         configure(switchLabel, rect: NSRect(x: 40, y: 206, width: 282, height: 22), size: 14, weight: .medium)
         configure(languageLabel, rect: NSRect(x: 40, y: 231, width: 282, height: 18), size: 11)
-        configure(footer, rect: NSRect(x: 24, y: 404, width: 372, height: 36), size: 11)
+        configure(footer, rect: NSRect(x: 24, y: 450, width: 372, height: 36), size: 11)
         awakeSwitch.target = self
         awakeSwitch.action = #selector(toggle)
         addSubview(awakeSwitch)
@@ -66,12 +70,19 @@ final class AwakePanelView: NSView {
         scheduleButton.target = self
         scheduleButton.action = #selector(showSchedule)
         addSubview(scheduleButton)
+        copyAIButton.frame = NSRect(x: 24, y: 399, width: 372, height: 30)
+        copyAIButton.bezelStyle = .rounded
+        copyAIButton.font = .systemFont(ofSize: 12, weight: .medium)
+        copyAIButton.target = self
+        copyAIButton.action = #selector(copyAI)
+        addSubview(copyAIButton)
         awakeSwitch.nextKeyView = languagePopup
         languagePopup.nextKeyView = wakeButton
         wakeButton.nextKeyView = dimButton
         dimButton.nextKeyView = scheduleButton
         scheduleButton.nextKeyView = guideButton
-        guideButton.nextKeyView = awakeSwitch
+        guideButton.nextKeyView = copyAIButton
+        copyAIButton.nextKeyView = awakeSwitch
         update(enabled: false, language: .english, error: nil)
     }
 
@@ -87,8 +98,13 @@ final class AwakePanelView: NSView {
     }
 
     func update(enabled: Bool, language: AppLanguage, error: PowerError?, actionState: DisplayActionState = .idle, nextEvent: ScheduledEvent? = nil) {
+        if self.language != language { aiCopied = false }
+        self.language = language
         self.enabled = enabled
         let text = AppText(language: language.resolved)
+        copyAIButton.title = aiCopied ? text.aiCopied : text.copyAITitle
+        copyAIButton.toolTip = text.copyAIHelp
+        copyAIButton.setAccessibilityHelp(text.copyAIHelp)
         product.stringValue = text.productName
         eyebrow.stringValue = text.eyebrow
         state.stringValue = text.state(enabled)
@@ -123,6 +139,11 @@ final class AwakePanelView: NSView {
         needsDisplay = true
     }
 
+    func confirmAICopied() {
+        aiCopied = true
+        copyAIButton.title = AppText(language: language.resolved).aiCopied
+    }
+    @objc private func copyAI() { onCopyAI?() }
     @objc private func toggle() { onToggle?(awakeSwitch.state == .on) }
     @objc private func showSchedule() { onSchedule?() }
     @objc private func showGuide() { onGuide?() }

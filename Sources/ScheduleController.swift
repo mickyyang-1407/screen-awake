@@ -16,10 +16,15 @@ final class ScheduleController {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        if let data = defaults.data(forKey: Self.storageKey),
+        settings = Self.loadSettings(defaults: defaults)
+    }
+
+    static func loadSettings(defaults: UserDefaults) -> ScheduleSettings {
+        if let data = defaults.data(forKey: storageKey),
            let loaded = try? JSONDecoder().decode(ScheduleSettings.self, from: data), loaded.daily.valid {
-            settings = loaded
-        } else { settings = ScheduleSettings() }
+            return loaded
+        }
+        return ScheduleSettings()
     }
 
     func start() {

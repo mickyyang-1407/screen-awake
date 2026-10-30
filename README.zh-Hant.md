@@ -10,9 +10,13 @@ macOS 14 以上 · Apple silicon 與 Intel · 繁體中文與英文 · MIT 授�
 
 ## 下載後直接使用
 
-1. 下載 DMG，把 **Screen Awake** 拖進 **Applications**；也可以下載 ZIP 並解壓縮。
-2. 開啟 **Screen Awake**。下載版已完成 Developer ID 簽署與 Apple 公證。
-3. 使用常亮開關，或點 **Wake 喚醒螢幕**、**Dim 關閉螢幕**。語言選單可切換繁中與英文。
+1. [下載 DMG](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.dmg)，把 **Screen Awake** 拖進 **Applications**。
+2. 打開 App，按 **複製給 AI**。
+3. 貼給 Claude Code 或有本機指令工具的 AI，再直接說：**「幫我保持亮屏」**、**「半小時後關屏」**、**「每天九點亮、六點暗」**。
+
+複製的文字已帶入這台 Mac 的實際安裝路徑。AI 會讀取 App 內建說明，用指令控制喚醒、常亮與排程，不需要操作 App 畫面。下載版已簽署並通過 Apple 公證，不需註冊、外掛或開發環境。
+
+也可以直接用 App 的開關與按鈕。語言選單可切換繁中與英文。
 
 | 控制項 | 用途 |
 | --- | --- |
@@ -53,9 +57,11 @@ App 裡的 **設定教學** 也能說明操作並打開對應的系統設定頁�
 
 ## 讓 AI 使用
 
-有本機指令權限的 AI，可以在需要畫面的工作前呼叫螢幕常亮。[AI 使用說明與可複製範本](AI-USAGE.zh-Hant.md)包含安裝路徑、指令與限制。你可以直接貼給 AI，也能填好實際路徑後，加入該專案既有的 AI 工作指引。
+在 App 或選單列按 **複製給 AI**，貼給 AI 即可。它會執行已安裝 App 的唯讀 `agent-help` 指令，取得正確路徑與本機使用說明，不需要連網查文件。
 
-GitHub 連結不會自動替 AI 完成設定。Mac 仍在運作時可以喚醒顯示器；已鎖定仍需親自解鎖，整台電腦睡眠或關機則無法用這個指令喚醒。
+AI 可以喚醒螢幕、開關持續常亮、設定每日時間、啟動倒數，並讀回儲存結果。設定新排程時，App 若未執行會在背景開啟。[AI 指令說明](AI-USAGE.zh-Hant.md)。
+
+AI 需要這台 Mac 的本機指令權限。Wake 無法解鎖已鎖定的 Mac，也無法喚醒整台睡眠或關機中的電腦；免密碼設定仍由你決定。
 
 ## 錄影腳本用法
 
@@ -69,7 +75,7 @@ AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
 "$AWAKE" dim
 ```
 
-`wake` 會先讀取關屏後的密碼要求，等待兩秒的喚醒要求結束，不留下持續常亮程序。錄影期間仍遵循原本的閒置時間；較長的錄影可先手動打開 GUI 常亮，錄完關閉後再呼叫 CLI `dim`。
+`wake` 會先讀取關屏後的密碼要求，等待兩秒的喚醒要求結束，不留下持續常亮程序。錄影期間仍遵循原本的閒置時間；較長的錄影可先用 `awake on` 開啟常亮；`dim` 會先釋放執行中 App 的常亮要求，再關屏。
 
 `dim` 請求關閉顯示器。回傳 0 表示請求被接受，使用者輸入或其他 App 仍可能再次喚醒螢幕；失敗會回傳非零，包含系統印出拒絕訊息但自身回傳 0 的情況。`--help` 列出指令，`--version` 顯示版本。CLI 不會修改系統閒置時間或安全設定，也不需要 sudo。
 
@@ -92,7 +98,7 @@ open "build/Screen Awake.app"
 
 建置使用 macOS 原生 SDK，產生 Apple silicon／Intel 通用版 App。本機建置採 ad-hoc 簽章，不需要憑證，也不會下載相依套件。`zsh scripts/build.sh --cli-only` 可略過 GUI 封裝，產生 `build/ScreenAwake`。
 
-執行 `zsh scripts/check.sh` 可進行隔離 CLI 與排程檢查，使用獨立偏好設定與計時器回呼，不會真的關閉顯示器或改系統設定；`zsh scripts/render-previews.sh` 會產生雙語狀態、排程與教學畫面的預覽。
+執行 `zsh scripts/check.sh` 可進行隔離 CLI、排程與 AI 控制檢查，使用獨立偏好設定與計時器回呼，不會真的關閉顯示器或改系統設定；`zsh scripts/render-previews.sh` 會產生雙語狀態、排程與教學畫面的預覽。
 
 歡迎回報問題或提供範圍明確的改善。請附上 macOS 版本、介面語言及預期行為。
 

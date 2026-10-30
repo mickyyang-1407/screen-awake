@@ -1,83 +1,50 @@
-# Use Screen Awake with an AI assistant
+# Download, open, paste into your AI
 
-[繁體中文](AI-USAGE.zh-Hant.md) · [Main guide](README.md)
+[繁體中文](AI-USAGE.zh-Hant.md) · [Download](https://github.com/mickyyang-1407/screen-awake/releases/latest/download/Screen-Awake-universal.dmg)
 
-An AI assistant with permission to run local commands on your Mac can call Screen Awake before work that needs the display. A chat without local command access cannot execute it. Screen Awake itself does not connect to an AI service.
+1. Install and open Screen Awake.
+2. Click **Copy instructions for AI** and paste into Claude Code or an AI with local command tools.
+3. Just ask what you want:
 
-You can paste the following into a task, or add it to that project's existing AI instructions after replacing the app path. Linking this page helps an assistant read the instructions; it does not automatically configure every assistant.
+> Keep my screen on.
+>
+> Dim the screen in half an hour.
+>
+> Wake at 9 AM and Dim at 6 PM every day.
 
-For a new installation, use the [complete Claude Code installation prompt (Traditional Chinese)](CLAUDE-CODE-INSTALL.zh-Hant.md).
+The copied text includes your installation's exact path and asks the assistant to read the built-in `agent-help` guide. No long installation prompt, plug-in or GUI automation is needed. These controls require **1.5.0** or later.
 
-## Copy this to your assistant
+The assistant needs command access on this Mac. A chat without local tools cannot execute commands.
 
-```text
-Screen Awake is installed on this Mac. For work that needs the display,
-use its CLI to wake the display if needed before starting.
+## Command reference for assistants
 
-First check these app locations, without scanning other disks:
-/Applications/Screen Awake.app
-~/Applications/Screen Awake.app
-~/Desktop/Screen Awake.app
-~/Desktop/螢幕常亮.app
-
-The executable inside the app is Contents/MacOS/ScreenAwake.
-Use the actual path you find, quoted as one argument. If it is not in
-these locations, ask me where I installed it.
-
-Run `status` to read the display-off password requirement, then `wake`
-when needed. `status` does not tell you whether the Mac is unlocked.
-A successful `wake` means the request was accepted; check the display
-with an available observation tool before claiming it is ready.
-If observation is unavailable, report only that wake was requested.
-
-Run `dim` only when I ask to turn the display off, or when my task
-explicitly includes turning it off after completion. Finish the work first.
-
-Wake is a one-time display wake. It cannot unlock the Mac or wake a
-sleeping/powered-off computer. If authentication is needed, ask me to
-unlock it myself. Leave password and system security settings unchanged.
-```
-
-For one task, you can shorten that to: “Use Screen Awake to wake the display before starting this screen-based task. Do not call Dim afterwards.” Include the installed app path the first time.
-
-## Commands
-
-With the standard Applications installation:
+Treat the installed app's `agent-help` as authoritative. This example assumes Applications; the Copy button supplies the actual local path.
 
 ```sh
 AWAKE='/Applications/Screen Awake.app/Contents/MacOS/ScreenAwake'
-"$AWAKE" status
-"$AWAKE" wake
+"$AWAKE" agent-help
+"$AWAKE" awake on
+"$AWAKE" awake off
+"$AWAKE" schedule daily 09:00 18:00
+"$AWAKE" schedule timer 30 dim
+"$AWAKE" schedule show
+"$AWAKE" schedule off
+"$AWAKE" schedule cancel
 ```
 
-If you put the app on your Desktop instead, replace the first line with the actual name:
+- `wake` wakes once; `awake on` wakes once and keeps the display on; `awake off` returns to the existing idle timeout.
+- `dim` releases the running app's keep-awake request before requesting display sleep. Use only when the user requests it.
+- `schedule daily` takes Wake time, then Dim time, saves and enables the schedule. Overnight ranges work. Either slot can be `off`, but at least one action is required. Wake holds awake by default; append `--no-keep-awake` for a one-time wake.
+- `schedule timer` takes 1–1440 whole minutes and `wake` or `dim`; it replaces the existing countdown.
+- `schedule off` disables daily scheduling and leaves the countdown. `schedule cancel` cancels the countdown and leaves daily scheduling. Neither changes the current keep-awake state.
+- `schedule show` returns JSON with app-running/keep-awake state, saved settings and next action. `status` reads only the display-off password requirement.
 
-```sh
-AWAKE="$HOME/Desktop/螢幕常亮.app/Contents/MacOS/ScreenAwake"
-```
+New schedules and keep-awake start the app in the background if needed. Queries, cancellations and keep-awake off do not launch a stopped app. Check JSON `success`, the returned state and exit code. A timeout means the outcome is unknown: inspect state before deciding whether to retry.
 
-| Command | Meaning |
-| --- | --- |
-| `status` | Reads the display-off password requirement. Does not report current display power or whether the session is unlocked. |
-| `wake` | Requests display wake, waits for its two-second user-activity assertion to end, then exits. Existing idle timeouts still apply. |
-| `dim` | Requests display sleep. Use after the user's work has finished and only when requested. |
+## Limits
 
-The CLI works without the GUI app running. Continuous keep-awake and schedules require the GUI app to remain running. If its keep-awake switch is on, turn that switch off before using CLI `dim`; the GUI Dim button releases its own request automatically.
+Keep the app running for assertions and schedules; closing windows is fine, quitting stops them. Reopening resumes future events only. Expired actions are skipped. Times follow the current Mac time zone.
 
-## Can the assistant set a schedule?
+Wake lights the display; it cannot unlock the Mac or wake a sleeping/powered-off computer. Let the user handle passwords and Touch ID. The optional [password setup](SETUP.md) remains their choice.
 
-In version 1.4.0, schedules are configured through the GUI. An assistant with macOS app-control tools can do this on your behalf; it is not limited to human clicks. Give it the times and actions you want, then have it open **Schedule**, fill **Daily** or **Countdown**, save/start, and verify the displayed next action.
-
-An assistant with terminal access alone can use `wake`, `dim` and `status`, but there is no schedule CLI command in this version. It should not invent one or write the app's private preferences to simulate configuration. If it cannot operate Mac apps, use the schedule page yourself.
-
-Do not choose another person's daily times without their instructions. Keep the GUI app running for saved schedules to execute; closing its window is fine.
-
-## What the assistant can expect
-
-- **Only the display is off:** the assistant can request a wake while the Mac and its command tools are still running.
-- **The session is locked:** the display can light up, but you must unlock the Mac yourself. The optional [password setup](SETUP.md) concerns display-off authentication; it does not cancel an explicit lock by you or another app.
-- **The whole Mac is asleep or powered off:** this CLI cannot wake it. Configure any separate system wake behavior yourself if needed.
-
-Wake does not keep the display on permanently. For a long task, enable the GUI keep-awake switch or use a daily Wake schedule with **Keep awake after Wake**. This is separate from waking the display once.
-
-If a computer-use tool locks the Mac again, stop and ask the user to unlock it. Do not disable that tool's lock protection or treat a successful wake request as proof that authentication was bypassed.
+A one-time wake still follows the system idle timeout. A successful request does not prove the Mac is unlocked or the display stays on/off. If observation is unavailable, report only that the request was accepted.
